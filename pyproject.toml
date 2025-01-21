@@ -1,0 +1,47 @@
+[tool.poetry]
+name = "image_sharing"
+version = "0.1.0"
+description = "Image sharing application"
+authors = ["Your Name <your.email@example.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.scripts]
+include = "src/image_sharing"
+
+[tool.poetry.dependencies]
+python = "^3.13"
+psycopg2-binary = "^2.9.9"
+python-dotenv = "^1.0.0"
+pillow = "^10.2.0"  # For image handling
+fastapi = "^0.70.0"
+uvicorn = "^0.15.0"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.1.0"
+isort = "^5.13.2"
+flake8 = "^7.0.0"
+pytest = "^7.4.4"
+pytest-cov = "^4.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 119
+target-version = ['py311']
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 119
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "core.settings"
+python_files = ["test_*.py", "*_test.py"]
+addopts = "-v --cov=. --cov-report=term-missing"
+testpaths = [
+    "api/tests",
+]

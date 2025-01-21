@@ -1,0 +1,33 @@
+### docker-compose.yml ###
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.build
+    command:  ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "8000"]
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      DEBUG: "1"
+      POSTGRES_DB: django_db
+      POSTGRES_USER: django_user
+      POSTGRES_PASSWORD: django_password
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+#    depends_on:
+#      - db
+#
+#  db:
+#    image: postgres:15
+#    volumes:
+#      - postgres_data:/var/lib/postgresql/data
+#    environment:
+#      - POSTGRES_DB=django_db
+#      - POSTGRES_USER=django_user
+#      - POSTGRES_PASSWORD=django_password
+#
+#volumes:
+#  postgres_data:
