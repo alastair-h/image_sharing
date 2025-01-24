@@ -6,7 +6,7 @@ from src.models.base import Base
 class Image(Base):
     __tablename__ = "images"
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    url = Column(String)
+    id = Column(Integer, primary_key=True)  # PSQL gives an index to the pk by default
+    image_url = Column(String)
+    caption = Column(String)
 
