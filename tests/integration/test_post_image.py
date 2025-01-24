@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timezone
 
 import pytest
 from fastapi.testclient import TestClient
@@ -7,6 +8,7 @@ from sqlalchemy.orm import sessionmaker
 from http import HTTPStatus
 from src.app import app
 
+
 @pytest.yield_fixture(scope='session')
 def event_loop(request):
     """Create an instance of the default event loop for each test case."""
@@ -14,11 +16,13 @@ def event_loop(request):
     yield loop
     loop.close()
 
+
 DATABASE_URL = "postgresql+psycopg2://image_sharing_user:image_sharing_password@db:5432/image_sharing_db"
 
 # Shared engine and session for synchronous tests
 engine = create_engine(DATABASE_URL, echo=True)
 Session = sessionmaker(engine)
+
 
 @pytest.fixture
 def db_session():
@@ -31,15 +35,9 @@ def db_session():
         session.execute(text("TRUNCATE TABLE images RESTART IDENTITY CASCADE;"))
         session.commit()
 
-
-# client = TestClient(app)
-# client_2 = TestClient(app)
-
 def test_post_image(client, db_session) -> None:
-    # with Session() as session:
 
-
-    image_post_data = {"image_url": "https://www.example.com/image.jpg", "caption": "A caption"}
+    image_post_data = {"image_url": "https://www.example.com/image.jpg", "caption": "A caption", "timestamp": datetime.now(timezone.utc).isoformat()}
     response = client.post(
         "/create_post",
         headers={"content-type": "application/json"},
@@ -56,21 +54,20 @@ def test_post_image(client, db_session) -> None:
     assert inserted_item.image_url == image_post_data["image_url"]
     assert inserted_item.caption == image_post_data["caption"]
 
-def test_post_image_2(client, db_session) -> None:
 
-    image_post_data = {"image_url": "https://www.example.com/second-image.jpg", "caption": "Another caption"}
+
+def test_too_long_caption_raises_error(client, db_session) -> None:
+    image_post_data = {"image_url": "https://www.example.com/second-image.jpg", "caption": "very long caption" * 10, "timestamp": datetime.now(timezone.utc).isoformat()}
     response = client.post(
         "/create_post",
         headers={"content-type": "application/json"},
         json=image_post_data,
     )
-    assert response.status_code == HTTPStatus.CREATED
-    assert response.json() == image_post_data
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert response.json() == {'detail': [
+        {'loc': ['body', 'caption'], 'msg': 'ensure this value has at most 100 characters',
+         'type': 'value_error.any_str.max_length', 'ctx': {'limit_value': 100}}]}
 
-    # Query the database to verify the item was inserted
+    # Query the database to verify the item was not inserted
     result = db_session.execute(text("SELECT image_url, caption FROM images"))
-    inserted_item = result.fetchone()
-
-    assert inserted_item is not None
-    assert inserted_item.image_url == image_post_data["image_url"]
-    assert inserted_item.caption == image_post_data["caption"]
+    assert result.fetchone() is None

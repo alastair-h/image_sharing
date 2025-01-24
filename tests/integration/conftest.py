@@ -12,22 +12,10 @@ def client() -> TestClient:
 
 
 @fixture
-def make_migrations():
+def make_migrations():  # TODO: integrate creation of migrations into setup
     pass
     # from alembic.config import Config
     # from alembic import command
     #
     # alembic_cfg = Config("alembic.ini")
     # command.upgrade(alembic_cfg, "head")
-# @fixture
-# def database_session():
-#     connection = engine.connect()
-#     transaction = connection.begin()
-#     session = Session(bind=connection)  # TODO: Should this be AsyncSession?
-#
-#     yield session  # Run the test
-#
-#     session.close()
-#     transaction.rollback()  # Undo changes
-#     connection.close()
-#
