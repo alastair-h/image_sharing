@@ -1,43 +1,21 @@
-import asyncio
 from datetime import datetime, timezone
-
-import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import text, create_engine
-from sqlalchemy.orm import sessionmaker
 from http import HTTPStatus
-from src.app import app
 
+from sqlalchemy import text
 
-@pytest.yield_fixture(scope='session')
-def event_loop(request):
-    """Create an instance of the default event loop for each test case."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
-DATABASE_URL = "postgresql+psycopg2://image_sharing_user:image_sharing_password@db:5432/image_sharing_db"
-
-# Shared engine and session for synchronous tests
-engine = create_engine(DATABASE_URL, echo=True)
-Session = sessionmaker(engine)
-
-
-@pytest.fixture
-def db_session():
-    with Session() as session:
-        # Clean up the database before each test
-        session.execute(text("TRUNCATE TABLE images RESTART IDENTITY CASCADE;"))
-        session.commit()
-        yield session
-        # Optionally clean up the database after each test
-        session.execute(text("TRUNCATE TABLE images RESTART IDENTITY CASCADE;"))
-        session.commit()
 
 def test_post_image(client, db_session) -> None:
-
-    image_post_data = {"image_url": "https://www.example.com/image.jpg", "caption": "A caption", "timestamp": datetime.now(timezone.utc).isoformat()}
+    user_data = {"username": "test_user", "email": "testuser@example.org"}
+    response = client.post(
+        "/signup_user",
+        headers={"content-type": "application/json"},
+        json=user_data,
+    )
+    assert response.status_code == HTTPStatus.CREATED
+    image_post_data = {"image_url": "https://www.example.com/image.jpg",
+                       "caption": "A caption",
+                       "email_of_poster": "testuser@example.org",
+                       "timestamp": datetime.now(timezone.utc).isoformat()}
     response = client.post(
         "/create_post",
         headers={"content-type": "application/json"},
@@ -47,7 +25,7 @@ def test_post_image(client, db_session) -> None:
     assert response.json() == image_post_data
 
     # Query the database to verify the item was inserted
-    result = db_session.execute(text("SELECT image_url, caption FROM images"))
+    result = db_session.execute(text("SELECT image_url, caption FROM image_posts"))
     inserted_item = result.fetchone()
 
     assert inserted_item is not None
@@ -55,9 +33,18 @@ def test_post_image(client, db_session) -> None:
     assert inserted_item.caption == image_post_data["caption"]
 
 
-
 def test_too_long_caption_raises_error(client, db_session) -> None:
-    image_post_data = {"image_url": "https://www.example.com/second-image.jpg", "caption": "very long caption" * 10, "timestamp": datetime.now(timezone.utc).isoformat()}
+    user_data = {"username": "test_user", "email": "testuser@example.org"}  # TODO: move to fixture, use db directly
+    client.post(
+        "/signup_user",
+        headers={"content-type": "application/json"},
+        json=user_data,
+    )
+
+    image_post_data = {"image_url": "https://www.example.com/second-image.jpg",
+                       "caption": "very long caption" * 10,
+                       "email_of_poster": "testuser@example.org",
+                       "timestamp": datetime.now(timezone.utc).isoformat()}
     response = client.post(
         "/create_post",
         headers={"content-type": "application/json"},
@@ -69,5 +56,39 @@ def test_too_long_caption_raises_error(client, db_session) -> None:
          'type': 'value_error.any_str.max_length', 'ctx': {'limit_value': 100}}]}
 
     # Query the database to verify the item was not inserted
-    result = db_session.execute(text("SELECT image_url, caption FROM images"))
+    result = db_session.execute(text("SELECT image_url, caption FROM image_posts"))
     assert result.fetchone() is None
+
+
+def test_user_not_found(client, db_session) -> None:
+    image_post_data = {"image_url": "https://www.example.com/image.jpg",
+                       "caption": "A caption",
+                       "email_of_poster": "unfound@nonexistant.com",
+                       "timestamp": datetime.now(timezone.utc).isoformat()}
+    response = client.post(
+        "/create_post",
+        headers={"content-type": "application/json"},
+        json=image_post_data,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
+def test_no_timestamp_raises_error(client, db_session) -> None:
+    user_data = {"username": "test_user", "email": "testuser@example.org"}  # TODO: move to fixture, use db directly
+    client.post(
+        "/signup_user",
+        headers={"content-type": "application/json"},
+        json=user_data,
+    )
+
+    image_post_data = {"image_url": "https://www.example.com/image.jpg",
+                       "caption": "A caption",
+                       "email_of_poster": "unfound@nonexistant.com"}
+
+    response = client.post(
+        "/create_post",
+        headers={"content-type": "application/json"},
+        json=image_post_data,
+    )
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
