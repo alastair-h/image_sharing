@@ -11,6 +11,14 @@ class LikeRepository:
         await db.commit()
 
     @staticmethod
+    async def unlike_post(post_id: int, user_id: int, db: AsyncSession) -> None:
+        await db.execute(likes.delete().where(
+            likes.c.post_id == post_id,
+            likes.c.user_id == user_id
+        ))
+        await db.commit()
+
+    @staticmethod
     async def is_post_liked(post_id: int, user_id: int, db: AsyncSession) -> bool:
         result = await db.execute(
             select(likes).where(

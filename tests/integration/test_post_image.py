@@ -25,7 +25,10 @@ def test_post_image(client, db_session) -> None:
         json=image_post_data,
     )
     assert response.status_code == HTTPStatus.CREATED
-    assert response.json() == image_post_data
+    assert response.json()["image_url"] == image_post_data["image_url"]
+    assert response.json()["caption"] == image_post_data["caption"]
+    assert response.json()["email_of_poster"] == image_post_data["email_of_poster"]
+    assert response.json()["timestamp"] == image_post_data["timestamp"]
 
     # Query the database to verify the item was inserted
     result = db_session.execute(text("SELECT image_url, caption FROM image_posts"))

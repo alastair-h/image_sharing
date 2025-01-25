@@ -1,11 +1,10 @@
-from datetime import datetime
 from http import HTTPStatus
 
 from fastapi import FastAPI, Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError, HTTPException
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine
 from sqlalchemy.orm import sessionmaker
 from starlette.requests import Request
@@ -58,7 +57,7 @@ class FollowUserRequest(BaseModel):
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    # needed to return 400 not 422
+    # needed to return 400 not 422, as per the spec
     return JSONResponse(
         status_code=HTTPStatus.BAD_REQUEST,
         content=jsonable_encoder({"detail": exc.errors()}),
@@ -103,16 +102,71 @@ async def get_posts(user_id: int, db: AsyncSession = Depends(get_async_session))
 
 @app.put("/like_post", status_code=HTTPStatus.OK)
 async def like_post(like_data: LikePost, db: AsyncSession = Depends(get_async_session)):
+    post_exists = await ImagePostRepository.try_get_post_by_id(like_data.post_id, db)
+    if not post_exists:
+        return {"detail": "Post not found", "status_code": HTTPStatus.NOT_FOUND}
     if await LikeRepository.is_post_liked(like_data.post_id, like_data.user_id, db):
-        return {"detail": "Post already liked"}
+        return {"detail": "Post already liked"}  # TODO: get rid of, its a put
     await LikeRepository.like_post(like_data.post_id, like_data.user_id, db)
     return {"detail": "Post liked"}
 
 
+@app.put("/unlike_post", status_code=HTTPStatus.NO_CONTENT)
+async def unlike_post(unlike_data: LikePost, db: AsyncSession = Depends(get_async_session)):
+    post_exists = await ImagePostRepository.try_get_post_by_id(unlike_data.post_id, db)
+    if not post_exists:
+        return {"detail": "Post not found", "status_code": HTTPStatus.NOT_FOUND}
+    if not await LikeRepository.is_post_liked(unlike_data.post_id, unlike_data.user_id, db):  # TODO: handle edge cases
+        return {"detail": "Post not liked", "status_code": HTTPStatus.UNPROCESSABLE_ENTITY}
+    await LikeRepository.like_post(unlike_data.post_id, unlike_data.user_id, db)
+    return {"detail": "Post unliked"}
+
+
 @app.put("/follow_user", status_code=HTTPStatus.OK)  # TODO: look at how auth changes the scope of this
 async def follow_user(follow_user_request: FollowUserRequest, db: AsyncSession = Depends(get_async_session)):
+    if not await UserRepository.get_user_by_id(follow_user_request.follower_user_id, db):
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Follower user not found")
+    if not await UserRepository.get_user_by_id(follow_user_request.following_user_id, db):
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="User to follow not found")
     if await FollowRepository.is_following(follow_user_request.follower_user_id, follow_user_request.following_user_id, db):
         return {"detail": "Already following"}
     await FollowRepository.follow_user(follow_user_request.follower_user_id, follow_user_request.following_user_id, db)
     return {"detail": "Followed successfully"}
 
+# TODO: unfollow_user
+
+@app.get("/get_following_list/{user_id}", status_code=HTTPStatus.OK)
+async def get_following_list(user_id: int, db: AsyncSession = Depends(get_async_session)):
+    # get a list of everyone this user is following
+    following_list = await FollowRepository.get_list_following(user_id, db)
+    return {"following": following_list}
+
+
+@app.get("/get_posts_from_user/{user_id}", status_code=HTTPStatus.OK)
+async def get_posts_from_user(user_id: int, db: AsyncSession = Depends(get_async_session)):
+    get_all_posts_for_user = await ImagePostRepository.get_all_posts_for_user(db, user_id)
+    return {"posts": get_all_posts_for_user}
+
+
+@app.get("/get_posts_from_following/{user_id}", status_code=HTTPStatus.OK)
+async def get_posts_from_following(user_id: int, db: AsyncSession = Depends(get_async_session)):
+    following_ids = await FollowRepository.get_list_following_ids(user_id, db)
+    if not following_ids:
+        return {"posts": []}
+
+    posts = await ImagePostRepository.get_all_posts(db, following_ids)
+    sorted_list = sorted(posts, key=lambda x: x.timestamp, reverse=True)
+    return {"posts": sorted_list}
+
+
+"""
+List posts from followed users (sorted by most recent) and all posts (sorted
+by number of likes).
+
+>  and all posts (sorted
+by number of likes).
+
+I take this to mean created a list of most liked posts across all users
+"""
+
+@app.get("/get_most_liked_", status_code=HTTPStatus.OK)

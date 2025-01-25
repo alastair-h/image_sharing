@@ -36,9 +36,14 @@ def db_session():
         # Clean up the database before each test
         session.execute(text("TRUNCATE TABLE image_posts RESTART IDENTITY CASCADE;"))
         session.execute(text("TRUNCATE TABLE users RESTART IDENTITY CASCADE;"))
+        session.execute(text("TRUNCATE TABLE follows RESTART IDENTITY CASCADE;"))
+        session.execute(text("TRUNCATE TABLE likes RESTART IDENTITY CASCADE;"))
         session.commit()
+
         yield session
         # Optionally clean up the database after each test
         session.execute(text("TRUNCATE TABLE users RESTART IDENTITY CASCADE;"))
         session.execute(text("TRUNCATE TABLE image_posts RESTART IDENTITY CASCADE;"))
+        session.execute(text("TRUNCATE TABLE follows RESTART IDENTITY CASCADE;"))
+        session.execute(text("TRUNCATE TABLE likes RESTART IDENTITY CASCADE;"))
         session.commit()
