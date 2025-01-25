@@ -249,7 +249,7 @@ async def get_suggested_users():
 async def get_sharable_link(post_id: int, db: AsyncSession = Depends(get_async_session)) -> str:
     post = await ImagePostRepository.try_get_post_by_id(post_id, db)
     if not post:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Post not found")
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail= "Post not found")
 
     return await ImagePostRepository.publish_post(post_id, db)
 
