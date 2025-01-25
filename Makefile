@@ -10,3 +10,5 @@ coverage-tests:
 	./scripts/coverage-tests.sh
 format:
 	./scripts/format.sh
+static-tests:
+	./scripts/static-tests.sh
