@@ -14,19 +14,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Check out the repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Step 2: Set up Docker Compose
-      - name: Set up Docker Compose
-        uses: docker/setup-buildx-action@v2
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@master
 
-      # Step 3: Start services using Docker Compose
       - name: Start services
         run: docker-compose -f docker-compose.yaml up -d db
 
-      # Step 4: Wait for the database to be ready
+      # wait for the database to be ready
       - name: Wait for Postgres
         run: |
           for i in {1..10}; do
@@ -36,11 +34,9 @@ jobs:
             echo "Waiting for Postgres..."; sleep 5
           done
 
-      # Step 5: Run database migrations
       - name: Run migrations
         run: ./scripts/migrate-head.sh
 
-      # Step 6: Run tests from Makefile
       - name: Run coverage tests
         run: make coverage-tests
 
@@ -50,7 +46,6 @@ jobs:
       - name: Run formatting checks
         run: make format
 
-      # Step 7: Tear down Docker Compose services
       - name: Stop services
         if: always()
         run: docker-compose -f docker-compose.yaml down
