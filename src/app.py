@@ -88,7 +88,7 @@ def hello_world():
 async def image_post(image_post_data: ImagePost, db: AsyncSession = Depends(get_async_session)) -> ImagePost:
     user = await UserRepository.get_user_by_email(image_post_data.email_of_poster, db)
     if not user:
-        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="User not found")
+        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="User not found")  # TODO: 404?
 
     new_post = await ImagePostRepository.create_post(
         image_url=image_post_data.image_url,
@@ -107,7 +107,7 @@ async def user_signup(user_data: User, db: AsyncSession = Depends(get_async_sess
     return new_user
 
 
-@app.get("/get_posts/{user_id}", status_code=HTTPStatus.OK)
+@app.get("/get_posts/{user_id}", status_code=HTTPStatus.OK)  # todo: rename to get_posts_by_user_id
 async def get_posts(user_id: int, db: AsyncSession = Depends(get_async_session)):
     posts = await ImagePostRepository.get_posts_by_user_id(user_id, db)
     if not posts:
@@ -221,10 +221,45 @@ async def get_most_liked_posts(db: AsyncSession = Depends(get_async_session)):
 @app.get("/get_mutual_followers/{user_id_1}/{user_id_2}", status_code=HTTPStatus.OK)
 async def get_mutual_followers(user_id_1: int, user_id_2: int, db: AsyncSession = Depends(get_async_session)):
     """
-    d. Show mutual followers (users who follow both the viewer and the profi
+    d. Show mutual followers (users who follow both the viewer and the profile
     owner) and suggest followers based on mutual connections.
     """
     users_following_user_1 = await FollowRepository.get_list_user_ids_following_user(user_id_1, db)
     users_following_user_2 = await FollowRepository.get_list_user_ids_following_user(user_id_2, db)
     common = [x for x in users_following_user_1 if x in users_following_user_2]
     return {"mutual followers": common}
+
+
+async def get_suggested_users():
+    """
+    given user a, user b, user c user d, user e, user f
+
+    user a follows user b, and user d also follows user b.
+    user e follows user c.
+    user f follows user b.
+    users a, d, f should be more likely to follow each other,
+    vs user e or user c, who seemingly have no relation
+
+    TODO: to me, suggested follower is the same as mutual followers unless we are looking to delve into graph theory here.
+    suggestions based on mutual followers with one node of depth is already provided in get_mutual_followers.
+    """
+    pass
+
+
+@app.get("/get_sharable_link/{post_id}", status_code=HTTPStatus.CREATED)
+async def get_sharable_link(post_id: int, db: AsyncSession = Depends(get_async_session)) -> str:
+    post = await ImagePostRepository.try_get_post_by_id(post_id, db)
+    if not post:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Post not found")
+
+    return await ImagePostRepository.publish_post(post_id, db)
+
+
+@app.get("/posts/{post_uuid}", status_code=HTTPStatus.OK)
+async def get_post_by_public_link(post_uuid: str, db: AsyncSession = Depends(get_async_session)) -> ImagePost:
+    if len(post_uuid) != 36:  # TODO: maybe use pydantic for this as per other requests
+        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="Invalid UUID format")
+    image_post = await ImagePostRepository.try_get_published_post_by_uuid(post_uuid, db)
+    if image_post:
+        return image_post
+    raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Post not found")

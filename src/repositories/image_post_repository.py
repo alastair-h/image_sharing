@@ -1,6 +1,7 @@
+import uuid
 from typing import List
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.image_model import ImagePostModel
@@ -51,3 +52,27 @@ class ImagePostRepository:
             .order_by(ImagePostModel.timestamp.desc())
         )
         return result.scalars().all()
+
+    @staticmethod
+    async def publish_post(post_id: int, db: AsyncSession) -> str:
+        # Generate a UUID
+        new_uuid = str(uuid.uuid4())
+
+        # Update the post with the generated UUID
+        await db.execute(
+            update(ImagePostModel)
+            .where(ImagePostModel.id == post_id)
+            .values(link_uuid=new_uuid)
+        )
+        await db.commit()
+
+        # Return the shareable link
+        return f"https://app.com/posts/{new_uuid}"
+
+    @staticmethod
+    async def try_get_published_post_by_uuid(post_uuid: str, db: AsyncSession) -> ImagePostModel | None:
+        post = await db.execute(
+            select(ImagePostModel).where(ImagePostModel.link_uuid == post_uuid)
+        )
+        return post.scalars().one_or_none()
+
