@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Self, AsyncGenerator
+from typing import AsyncGenerator, Self
 
 from fastapi import Depends, FastAPI
 from fastapi.encoders import jsonable_encoder
