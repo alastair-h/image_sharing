@@ -80,12 +80,10 @@ def test_get_most_liked_posts(client, db_session) -> None:
         text("INSERT INTO likes (post_id, user_id) VALUES (:post_id, :user_id);"),
         {"post_id": post_1.id, "user_id": user.id},
     )
-
     db_session.execute(
         text("INSERT INTO likes (post_id, user_id) VALUES (:post_id, :user_id);"),
         {"post_id": post_2.id, "user_id": user.id},
     )
-
     db_session.execute(
         text("INSERT INTO likes (post_id, user_id) VALUES (:post_id, :user_id);"),
         {"post_id": post_3.id, "user_id": user.id},
@@ -107,3 +105,49 @@ def test_get_most_liked_posts(client, db_session) -> None:
     assert response.json()["most_liked_posts"][1] in [1, 3]
     assert response.json()["most_liked_posts"][2] in [1, 3]
     assert 4 not in response.json()["most_liked_posts"]  # post 4 has no likes
+
+
+def test_unlike_post_post_not_found(client, db_session):
+    user = UserModel(username="test_user", email="test_user@example.com")
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+
+    response = client.put(
+        "/unlike_post",
+        headers={"content-type": "application/json"},
+        json={"user_id": user.id, "post_id": 999},
+    )
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {"detail": "post not found"}
+
+
+def test_unlike_post_success(client, db_session):
+    user = UserModel(username="test_user", email="test_user@example.com")
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+
+    post_1 = ImagePostModel(
+        image_url="http://example.com/image1.jpg",
+        caption="First Post",
+        user_id=user.id,
+        timestamp=datetime.now(timezone.utc),
+    )
+
+    db_session.add(post_1)
+    db_session.commit()
+    db_session.refresh(post_1)
+
+    response = client.put(
+        "/unlike_post",
+        headers={"content-type": "application/json"},
+        json={"user_id": user.id, "post_id": post_1.id},
+    )
+    assert response.status_code == HTTPStatus.OK
+    result = db_session.execute(
+        text("SELECT * FROM likes WHERE user_id = :user_id AND post_id = :post_id"),
+        {"user_id": user.id, "post_id": post_1.id},
+    )
+    like_record = result.fetchone()
+    assert like_record is None

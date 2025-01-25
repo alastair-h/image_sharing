@@ -125,14 +125,12 @@ async def like_post(like_data: LikePost, db: AsyncSession = Depends(get_async_se
     return {"detail": "Post liked"}
 
 
-@app.put("/unlike_post", status_code=HTTPStatus.NO_CONTENT)
+@app.put("/unlike_post", status_code=HTTPStatus.OK)
 async def unlike_post(unlike_data: LikePost, db: AsyncSession = Depends(get_async_session)):
     post_exists = await ImagePostRepository.try_get_post_by_id(unlike_data.post_id, db)
     if not post_exists:
-        return {"detail": "Post not found", "status_code": HTTPStatus.NOT_FOUND}
-    if not await LikeRepository.is_post_liked(unlike_data.post_id, unlike_data.user_id, db):  # TODO: handle edge cases
-        return {"detail": "Post not liked", "status_code": HTTPStatus.UNPROCESSABLE_ENTITY}
-    await LikeRepository.like_post(unlike_data.post_id, unlike_data.user_id, db)
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="post not found")
+    await LikeRepository.unlike_post(unlike_data.post_id, unlike_data.user_id, db)
     return {"detail": "Post unliked"}
 
 
@@ -249,7 +247,7 @@ async def get_suggested_users():
 async def get_sharable_link(post_id: int, db: AsyncSession = Depends(get_async_session)) -> str:
     post = await ImagePostRepository.try_get_post_by_id(post_id, db)
     if not post:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail= "Post not found")
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Post not found")
 
     return await ImagePostRepository.publish_post(post_id, db)
 
