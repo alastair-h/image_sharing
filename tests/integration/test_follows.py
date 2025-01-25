@@ -15,8 +15,11 @@ def test_follow_user_success(client, db_session) -> None:
     db_session.refresh(following)
 
     # Send a valid follow request
-    response = client.put("/follow_user", headers={"content-type": "application/json"},
-                          json={"follower_user_id": follower.id, "following_user_id": following.id})
+    response = client.put(
+        "/follow_user",
+        headers={"content-type": "application/json"},
+        json={"follower_user_id": follower.id, "following_user_id": following.id},
+    )
 
     # Assert
     assert response.status_code == HTTPStatus.OK
@@ -32,8 +35,11 @@ def test_follow_user_follower_not_found(client, db_session) -> None:
     db_session.refresh(following)
 
     # attempt to follow with a non-existent follower
-    response = client.put("/follow_user", headers={"content-type": "application/json"},
-                          json={"follower_user_id": 999, "following_user_id": following.id})
+    response = client.put(
+        "/follow_user",
+        headers={"content-type": "application/json"},
+        json={"follower_user_id": 999, "following_user_id": following.id},
+    )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {"detail": "Follower user not found"}
@@ -47,16 +53,24 @@ def test_follow_user_idempotency(client, db_session) -> None:
     db_session.refresh(follower)
     db_session.refresh(following)
 
-    response1 = client.put("/follow_user", headers={"content-type": "application/json"},
-                           json={"follower_user_id": follower.id, "following_user_id": following.id})
-    response2 = client.put("/follow_user", headers={"content-type": "application/json"},
-                           json={"follower_user_id": follower.id, "following_user_id": following.id})
+    response1 = client.put(
+        "/follow_user",
+        headers={"content-type": "application/json"},
+        json={"follower_user_id": follower.id, "following_user_id": following.id},
+    )
+    response2 = client.put(
+        "/follow_user",
+        headers={"content-type": "application/json"},
+        json={"follower_user_id": follower.id, "following_user_id": following.id},
+    )
 
     assert response1.status_code == HTTPStatus.OK
     assert response2.status_code == HTTPStatus.OK
 
-    result = db_session.execute(text("SELECT COUNT(*) FROM follows WHERE follower=:follower AND following=:following"),
-                                {"follower": follower.id, "following": following.id})
+    result = db_session.execute(
+        text("SELECT COUNT(*) FROM follows WHERE follower=:follower AND following=:following"),
+        {"follower": follower.id, "following": following.id},
+    )
     assert result.scalar() == 1
 
 
@@ -70,10 +84,14 @@ def test_get_following_list(client, db_session) -> None:
     db_session.refresh(user1)
     db_session.refresh(user2)
     db_session.refresh(user3)
-    db_session.execute(text("INSERT INTO follows (follower, following) VALUES (:follower, :following)"),
-                       {"follower": user1.id, "following": user2.id})  # user1 -> user2
-    db_session.execute(text("INSERT INTO follows (follower, following) VALUES (:follower, :following)"),
-                       {"follower": user3.id, "following": user1.id})  # user3 -> user1
+    db_session.execute(
+        text("INSERT INTO follows (follower, following) VALUES (:follower, :following)"),
+        {"follower": user1.id, "following": user2.id},
+    )  # user1 -> user2
+    db_session.execute(
+        text("INSERT INTO follows (follower, following) VALUES (:follower, :following)"),
+        {"follower": user3.id, "following": user1.id},
+    )  # user3 -> user1
     db_session.commit()
 
     # Act

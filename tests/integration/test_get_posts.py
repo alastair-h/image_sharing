@@ -18,16 +18,32 @@ def test_get_posts_from_user(client, db_session: AsyncSession) -> None:
     db_session.refresh(user2)
 
     posts_user1 = [
-        ImagePostModel(image_url="http://example.com/image1.jpg", caption="Post 1", user_id=user1.id,
-                       timestamp=datetime.now(timezone.utc)),
-        ImagePostModel(image_url="http://example.com/image2.jpg", caption="Post 2", user_id=user1.id,
-                       timestamp=datetime.now(timezone.utc)),
+        ImagePostModel(
+            image_url="http://example.com/image1.jpg",
+            caption="Post 1",
+            user_id=user1.id,
+            timestamp=datetime.now(timezone.utc),
+        ),
+        ImagePostModel(
+            image_url="http://example.com/image2.jpg",
+            caption="Post 2",
+            user_id=user1.id,
+            timestamp=datetime.now(timezone.utc),
+        ),
     ]
     posts_user2 = [
-        ImagePostModel(image_url="http://example.com/image3.jpg", caption="Post 3", user_id=user2.id,
-                       timestamp=datetime.now(timezone.utc)),
-        ImagePostModel(image_url="http://example.com/image4.jpg", caption="Post 4", user_id=user2.id,
-                       timestamp=datetime.now(timezone.utc)),
+        ImagePostModel(
+            image_url="http://example.com/image3.jpg",
+            caption="Post 3",
+            user_id=user2.id,
+            timestamp=datetime.now(timezone.utc),
+        ),
+        ImagePostModel(
+            image_url="http://example.com/image4.jpg",
+            caption="Post 4",
+            user_id=user2.id,
+            timestamp=datetime.now(timezone.utc),
+        ),
     ]
     db_session.add_all(posts_user1 + posts_user2)
     db_session.commit()
@@ -88,7 +104,8 @@ def __setup_get_posts_from_following(passed_session: AsyncSession) -> UserModel:
         image_url="http://example.com/image3.jpg",
         caption="Post 3",
         user_id=not_following.id,
-        timestamp=datetime(2025, 1, 3, tzinfo=timezone.utc))
+        timestamp=datetime(2025, 1, 3, tzinfo=timezone.utc),
+    )
 
     post_4 = ImagePostModel(
         image_url="http://example.com/image4.jpg",
@@ -113,5 +130,3 @@ def test_get_posts_from_following_success(client, db_session: AsyncSession):
     assert response_data["posts"][0]["caption"] == "Post 4"  # Most recent post
     assert response_data["posts"][1]["caption"] == "Post 2"  # Older post
     assert response_data["posts"][2]["caption"] == "Post 1"  # Oldest post
-
-

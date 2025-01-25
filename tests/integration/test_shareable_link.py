@@ -11,7 +11,9 @@ def test_get_sharable_link_success(client, db_session):
     db_session.add(user)
     db_session.commit()
     db_session.refresh(user)
-    post = ImagePostModel(image_url="http://example.com/image.jpg", caption="Test Post", timestamp=datetime(2025, 1, 1), user_id=user.id)
+    post = ImagePostModel(
+        image_url="http://example.com/image.jpg", caption="Test Post", timestamp=datetime(2025, 1, 1), user_id=user.id
+    )
     db_session.add(post)
     db_session.commit()
     db_session.refresh(post)
@@ -42,7 +44,7 @@ def test_get_post_by_public_link_success(client, db_session):
         caption="Test Post",
         link_uuid=str(uuid.uuid4()),
         user_id=user.id,
-        timestamp=datetime.now()
+        timestamp=datetime.now(),
     )
     db_session.add(post)
     db_session.commit()
@@ -55,12 +57,14 @@ def test_get_post_by_public_link_success(client, db_session):
     assert post_data["image_url"] == "http://example.com/image.jpg"
     assert post_data["caption"] == "Test Post"
 
+
 def test_get_post_by_public_link_not_found(client, db_session):
     non_existent_uuid = str(uuid.uuid4())
     response = client.get(f"/posts/{non_existent_uuid}")
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {"detail": "Post not found"}
+
 
 def test_get_post_by_public_link_invalid_uuid(client):
     response = client.get("/posts/invalid-uuid-format")

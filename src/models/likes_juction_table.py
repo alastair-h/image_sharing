@@ -8,4 +8,3 @@ likes = Table(
     Column("user_id", ForeignKey("users.id"), primary_key=True),  # composite primary key
     Column("post_id", ForeignKey("image_posts.id"), primary_key=True),
 )
-

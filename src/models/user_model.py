@@ -30,7 +30,7 @@ class UserModel(Base):
         secondary=follows,
         primaryjoin=id == follows.c.follower,
         secondaryjoin=id == follows.c.following,
-        backref="followers_relationship"
+        backref="followers_relationship",
     )
 
     @property
@@ -42,5 +42,3 @@ class UserModel(Base):
     def followers(self):
         # this is just syntactic sugar so we knows this even exists
         return self.__dict__.get("followers_relationship", [])
-
-

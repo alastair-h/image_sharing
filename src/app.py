@@ -42,16 +42,15 @@ async def get_async_session():
         yield async_sess
 
 
-class User(BaseModel):  # TODO: think about whether to expose ID to frontend, mostly working with IDs, but don't want to expose implementation
+class User(
+    BaseModel
+):  # TODO: think about whether to expose ID to frontend, mostly working with IDs, but don't want to expose implementation
     username: str  # TODO: could use hash
     email: str
 
     @staticmethod
     def from_db_model(user_db_model: UserModel) -> Self:
-        return User(
-            username=user_db_model.username,
-            email=user_db_model.email
-        )
+        return User(username=user_db_model.username, email=user_db_model.email)
 
 
 class UserProfile(BaseModel):
@@ -96,7 +95,7 @@ async def image_post(image_post_data: ImagePost, db: AsyncSession = Depends(get_
         email_of_poster=image_post_data.email_of_poster,
         user_id=user.id,
         timestamp=image_post_data.timestamp,
-        db=db
+        db=db,
     )  # TODO: consider whether to return the whole post including id
     return new_post
 
@@ -143,14 +142,16 @@ async def follow_user(follow_user_request: FollowUserRequest, db: AsyncSession =
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Follower user not found")
     if not await UserRepository.get_user_by_id(follow_user_request.following_user_id, db):
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="User to follow not found")
-    if await FollowRepository.is_following(follow_user_request.follower_user_id, follow_user_request.following_user_id,
-                                           db):
+    if await FollowRepository.is_following(
+        follow_user_request.follower_user_id, follow_user_request.following_user_id, db
+    ):
         return {"detail": "Already following"}
     await FollowRepository.follow_user(follow_user_request.follower_user_id, follow_user_request.following_user_id, db)
     return {"detail": "Followed successfully"}
 
 
 # TODO: unfollow_user
+
 
 @app.get("/get_following_list/{user_id}", status_code=HTTPStatus.OK)  # TODO: rename remove get
 async def get_following_list(user_id: int, db: AsyncSession = Depends(get_async_session)):
@@ -166,9 +167,7 @@ async def get_user_profile(user_id: int, db: AsyncSession = Depends(get_async_se
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="user not found")
     following_count = await FollowRepository.get_number_of_following(user_id, db)
     follower_count = await FollowRepository.get_number_of_followers(user_id, db)
-    return UserProfile(user=User.from_db_model(user),
-                       following_count=following_count,
-                       follower_count=follower_count)
+    return UserProfile(user=User.from_db_model(user), following_count=following_count, follower_count=follower_count)
 
 
 @app.get("/get_posts_from_user/{user_id}", status_code=HTTPStatus.OK)

@@ -14,15 +14,13 @@ fileConfig(config.config_file_name)
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
 target_metadata = Base.metadata
 
+
 def run_migrations_offline():
     """Run migrations in 'offline' mode."""
-    context.configure(
-        url=DATABASE_URL,
-        target_metadata=target_metadata,
-        literal_binds=True
-    )
+    context.configure(url=DATABASE_URL, target_metadata=target_metadata, literal_binds=True)
     with context.begin_transaction():
         context.run_migrations()
+
 
 def do_run_migrations(sync_connection):
     """
@@ -32,6 +30,7 @@ def do_run_migrations(sync_connection):
     context.configure(connection=sync_connection, target_metadata=target_metadata)
     with context.begin_transaction():
         context.run_migrations()
+
 
 async def run_migrations_online():
     """
@@ -49,8 +48,10 @@ async def run_migrations_online():
         # the synchronous connection as its sole argument.
         await connection.run_sync(do_run_migrations)
 
+
 if context.is_offline_mode():
     run_migrations_offline()
 else:
     import asyncio
+
     asyncio.run(run_migrations_online())

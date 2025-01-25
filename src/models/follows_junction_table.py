@@ -8,5 +8,4 @@ follows = Table(
     Base.metadata,
     Column("follower", ForeignKey("users.id"), primary_key=True),  # composite primary key
     Column("following", ForeignKey("users.id"), primary_key=True),
-
 )

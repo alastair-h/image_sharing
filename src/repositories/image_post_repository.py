@@ -9,14 +9,11 @@ from src.models.image_model import ImagePostModel
 
 class ImagePostRepository:
     @staticmethod
-    async def create_post(image_url: str, caption: str, email_of_poster: str, user_id: int, timestamp,
-                          db: AsyncSession) -> ImagePostModel:
+    async def create_post(
+        image_url: str, caption: str, email_of_poster: str, user_id: int, timestamp, db: AsyncSession
+    ) -> ImagePostModel:
         new_image = ImagePostModel(
-            image_url=image_url,
-            caption=caption,
-            email_of_poster=email_of_poster,
-            user_id=user_id,
-            timestamp=timestamp
+            image_url=image_url, caption=caption, email_of_poster=email_of_poster, user_id=user_id, timestamp=timestamp
         )
         db.add(new_image)
         await db.commit()
@@ -27,7 +24,6 @@ class ImagePostRepository:
     async def get_posts_by_user_id(user_id: int, db: AsyncSession) -> List[ImagePostModel]:
         result = await db.execute(select(ImagePostModel).where(ImagePostModel.user_id == user_id))
         return result.scalars().all()
-
 
     @staticmethod
     async def get_post_by_id(post_id: int, db: AsyncSession) -> ImagePostModel:
@@ -59,11 +55,7 @@ class ImagePostRepository:
         new_uuid = str(uuid.uuid4())
 
         # Update the post with the generated UUID
-        await db.execute(
-            update(ImagePostModel)
-            .where(ImagePostModel.id == post_id)
-            .values(link_uuid=new_uuid)
-        )
+        await db.execute(update(ImagePostModel).where(ImagePostModel.id == post_id).values(link_uuid=new_uuid))
         await db.commit()
 
         # Return the shareable link
@@ -71,8 +63,5 @@ class ImagePostRepository:
 
     @staticmethod
     async def try_get_published_post_by_uuid(post_uuid: str, db: AsyncSession) -> ImagePostModel | None:
-        post = await db.execute(
-            select(ImagePostModel).where(ImagePostModel.link_uuid == post_uuid)
-        )
+        post = await db.execute(select(ImagePostModel).where(ImagePostModel.link_uuid == post_uuid))
         return post.scalars().one_or_none()
-

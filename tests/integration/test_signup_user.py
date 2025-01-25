@@ -15,10 +15,8 @@ def test_sign_up_new_user(client, db_session) -> None:
     assert response.json()["username"] == user_data["username"]
     assert response.json()["email"] == user_data["email"]
 
-
     result = db_session.execute(text("SELECT email, username FROM users"))
     inserted_item = result.fetchone()
     assert inserted_item is not None
     assert inserted_item.email == user_data["email"]
     assert inserted_item.username == user_data["username"]
-

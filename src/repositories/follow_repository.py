@@ -16,10 +16,7 @@ class FollowRepository:
     @staticmethod
     async def is_following(follower_id: int, following_id: int, db: AsyncSession) -> bool:
         result = await db.execute(
-            select(follows).where(
-                follows.c.follower == follower_id,
-                follows.c.following == following_id
-            )
+            select(follows).where(follows.c.follower == follower_id, follows.c.following == following_id)
         )
         return result.fetchone() is not None
 
@@ -32,28 +29,20 @@ class FollowRepository:
 
     @staticmethod
     async def get_list_user_ids_following_user(user_id: int, db: AsyncSession) -> List[int]:
-        result = await db.execute(
-            select(follows).where(follows.c.following == user_id)
-        )
+        result = await db.execute(select(follows).where(follows.c.following == user_id))
         return result.scalars().all()
 
     @staticmethod
     async def get_number_of_followers(user_id: int, db: AsyncSession) -> int:
-        result = await db.execute(
-            select(func.count()).select_from(follows).where(follows.c.following == user_id)
-        )
+        result = await db.execute(select(func.count()).select_from(follows).where(follows.c.following == user_id))
         return result.scalar() or 0
 
     @staticmethod
     async def get_number_of_following(user_id: int, db: AsyncSession) -> int:
-        result = await db.execute(
-            select(func.count()).select_from(follows).where(follows.c.follower == user_id)
-        )
+        result = await db.execute(select(func.count()).select_from(follows).where(follows.c.follower == user_id))
         return result.scalar() or 0
 
     @staticmethod
     async def get_list_following_ids(user_id: int, db: AsyncSession) -> List[int]:
-        result = await db.execute(
-            select(follows.c.following).where(follows.c.follower == user_id)
-        )
+        result = await db.execute(select(follows.c.following).where(follows.c.follower == user_id))
         return result.scalars().all()
