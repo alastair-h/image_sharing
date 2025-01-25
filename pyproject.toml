@@ -10,7 +10,7 @@ package-mode = false
 include = "src/image_sharing"
 
 [tool.poetry.dependencies]
-python = "^3.13"
+python = "^3.11"
 psycopg2-binary = "^2.9.9"
 python-dotenv = "^1.0.0"
 pillow = "^10.2.0"  # For image handling
@@ -20,6 +20,9 @@ sqlalchemy = "^2.0.37"
 alembic = "^1.14.1"
 asyncpg = "^0.30.0"
 pytest-asyncio = "^0.25.2"
+numpy = "2.0.2"
+tensorflow = "^2.18.0"
+tensorflow-hub = "^0.16.1"
 
 
 [tool.poetry.group.dev.dependencies]
