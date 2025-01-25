@@ -27,7 +27,7 @@ jobs:
             sudo apt-get install -y docker-compose
 
       - name: Start services
-        run: docker-compose -f docker-compose.yaml up -d db
+        run: docker-compose -f docker-compose.yaml up -d
 
       # wait for the database to be ready
       - name: Wait for Postgres
