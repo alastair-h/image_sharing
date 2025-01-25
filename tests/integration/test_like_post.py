@@ -21,7 +21,7 @@ def test_like_post_success(client, db_session) -> None:
     db_session.add_all([post1, post2])
     db_session.commit()
 
-    response = client.post("/like_post", headers={"content-type": "application/json"}, json={"post_id": post2.id, "user_id": user.id})
+    response = client.put("/like_post", headers={"content-type": "application/json"}, json={"post_id": post2.id, "user_id": user.id})
     assert response.status_code == HTTPStatus.OK
 
     result = db_session.execute(text("SELECT post_id, user_id from likes;"))

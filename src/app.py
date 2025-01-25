@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngin
 from sqlalchemy.orm import sessionmaker
 from starlette.requests import Request
 
+from src.models.follows_junction_table import follows
 from src.models.image_model import ImagePostModel
 from src.models.likes_juction_table import likes
 from src.models.user_model import UserModel
@@ -19,7 +20,8 @@ app = FastAPI()
 DATABASE_URL = "postgresql+asyncpg://image_sharing_user:image_sharing_password@db:5432/image_sharing_db"
 
 
-def get_async_engine() -> AsyncEngine:
+def get_async_engine() -> AsyncEngine:  # TODO: review this, are we making an engine for each request?
+    # does fast api provide a singleton pattern here?
     async_engine: AsyncEngine = create_async_engine(
         DATABASE_URL,
         future=True,
@@ -50,9 +52,16 @@ class User(BaseModel):
     username: str
     email: str
 
+
 class LikePost(BaseModel):
     post_id: int
     user_id: int
+
+
+class FollowUserRequest(BaseModel):
+    follower_user_id: int  # the user.id of the user who wants to follow
+    following_user_id: int  # the user.id of the user being followed
+
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
@@ -114,7 +123,7 @@ async def get_posts(user_id: int,
     return posts
 
 
-@app.post("/like_post", status_code=HTTPStatus.OK)
+@app.put("/like_post", status_code=HTTPStatus.OK)
 async def like_post(like_data: LikePost,
                     db: AsyncSession = Depends(get_async_session)):
     await db.execute(likes.insert().values(post_id=like_data.post_id, user_id=like_data.user_id))
@@ -122,3 +131,11 @@ async def like_post(like_data: LikePost,
     return {"detail": "Post liked"}
 
 
+@app.put("/follow_user", status_code=HTTPStatus.OK)
+async def follow_user(follow_user_request: FollowUserRequest,
+                      db: AsyncSession = Depends(get_async_session)):
+    # TODO: if implementing auth, check that the user is the same as the one in the token, maybe we can simplify this
+    await db.execute(follows.insert().values(follower=follow_user_request.follower_user_id,
+                                             following=follow_user_request.following_user_id))
+    await db.commit()
+    # TODO: 404 if user not found
