@@ -24,11 +24,28 @@ class FollowRepository:
         return result.fetchone() is not None
 
     @staticmethod
-    async def get_list_following(user_id: int, db: AsyncSession) -> List[UserModel]:
+    async def get_list_users_user_is_following(user_id: int, db: AsyncSession) -> List[UserModel]:
         result = await db.execute(
             select(UserModel).join(follows, UserModel.id == follows.c.following).where(follows.c.follower == user_id)
         )
         return result.scalars().all()
+
+    @staticmethod
+    async def get_list_user_ids_following_user(user_id: int, db: AsyncSession) -> List[int]:
+        result = await db.execute(
+            select(follows).where(follows.c.following == user_id)
+        )
+        return result.scalars().all()
+
+    @staticmethod
+    async def get_number_of_followers(user_id: int, db: AsyncSession) -> int:
+        # TODO:
+        pass
+
+    @staticmethod
+    async def get_number_of_following(user_id: int, db: AsyncSession) -> int:
+        # TODO:
+        pass
 
     @staticmethod
     async def get_list_following_ids(user_id: int, db: AsyncSession) -> List[int]:
@@ -36,5 +53,3 @@ class FollowRepository:
             select(follows.c.following).where(follows.c.follower == user_id)
         )
         return result.scalars().all()
-
-

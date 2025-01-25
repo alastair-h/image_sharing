@@ -128,18 +128,26 @@ async def follow_user(follow_user_request: FollowUserRequest, db: AsyncSession =
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Follower user not found")
     if not await UserRepository.get_user_by_id(follow_user_request.following_user_id, db):
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="User to follow not found")
-    if await FollowRepository.is_following(follow_user_request.follower_user_id, follow_user_request.following_user_id, db):
+    if await FollowRepository.is_following(follow_user_request.follower_user_id, follow_user_request.following_user_id,
+                                           db):
         return {"detail": "Already following"}
     await FollowRepository.follow_user(follow_user_request.follower_user_id, follow_user_request.following_user_id, db)
     return {"detail": "Followed successfully"}
+
 
 # TODO: unfollow_user
 
 @app.get("/get_following_list/{user_id}", status_code=HTTPStatus.OK)
 async def get_following_list(user_id: int, db: AsyncSession = Depends(get_async_session)):
     # get a list of everyone this user is following
-    following_list = await FollowRepository.get_list_following(user_id, db)
+    following_list = await FollowRepository.get_list_users_user_is_following(user_id, db)
     return {"following": following_list}
+
+
+#def get follower count for user id TODO:
+
+#def get folloing count for user id TODO:
+
 
 
 @app.get("/get_posts_from_user/{user_id}", status_code=HTTPStatus.OK)
@@ -169,4 +177,34 @@ by number of likes).
 I take this to mean created a list of most liked posts across all users
 """
 
-@app.get("/get_most_liked_", status_code=HTTPStatus.OK)
+
+@app.get("/get_most_liked_posts", status_code=HTTPStatus.OK)
+async def get_most_liked_posts(db: AsyncSession = Depends(get_async_session)):
+    """
+    > List posts from followed users (sorted by most recent) and all posts (sorted
+    by number of likes).
+    >  and all posts (sorted by number of likes).
+    I take this to mean created a list of most liked posts across all users.
+
+    I intentionally don't return the number of likes for each post: I imagine this to be used to make a 'trending' page
+    """
+
+    # TODO: look into the efficiency of this because its a lot of data. we might need to denormalize the data
+    # we also should consider pagination, using a limit properly
+
+    # should just get the table likes, and the count of likes for each post
+    posts = await LikeRepository.get_most_liked_posts(db)
+    return {"most_liked_posts": posts}
+
+
+@app.get("/get_mutual_followers/{user_id_1}/{user_id_2}", status_code=HTTPStatus.OK)
+async def get_mutual_followers(user_id_1: int, user_id_2: int, db: AsyncSession = Depends(get_async_session)):
+    """
+    d. Show mutual followers (users who follow both the viewer and the profi
+    owner) and suggest followers based on mutual connections.
+    """
+    users_following_user_1 = await FollowRepository.get_list_user_ids_following_user(user_id_1, db)
+    users_following_user_2 = await FollowRepository.get_list_user_ids_following_user(user_id_2, db)
+    common = [x for x in users_following_user_1 if x in users_following_user_2]
+    return {"mutual followers": common}
+
