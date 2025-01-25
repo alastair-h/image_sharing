@@ -134,22 +134,16 @@ async def unlike_post(unlike_data: LikePost, db: AsyncSession = Depends(get_asyn
     return {"detail": "Post unliked"}
 
 
-@app.put("/follow_user", status_code=HTTPStatus.OK)  # TODO: look at how auth changes the scope of this
+@app.put("/follow_user", status_code=HTTPStatus.OK)
 async def follow_user(follow_user_request: FollowUserRequest, db: AsyncSession = Depends(get_async_session)):
     if not await UserRepository.get_user_by_id(follow_user_request.follower_user_id, db):
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Follower user not found")
-    if not await UserRepository.get_user_by_id(follow_user_request.following_user_id, db):
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="User to follow not found")
     if await FollowRepository.is_following(
         follow_user_request.follower_user_id, follow_user_request.following_user_id, db
     ):
         return {"detail": "Already following"}
     await FollowRepository.follow_user(follow_user_request.follower_user_id, follow_user_request.following_user_id, db)
     return {"detail": "Followed successfully"}
-
-
-# TODO: unfollow_user
-
 
 @app.get("/get_following_list/{user_id}", status_code=HTTPStatus.OK)  # TODO: rename remove get
 async def get_following_list(user_id: int, db: AsyncSession = Depends(get_async_session)):
@@ -165,6 +159,7 @@ async def get_user_profile(user_id: int, db: AsyncSession = Depends(get_async_se
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="user not found")
     following_count = await FollowRepository.get_number_of_following(user_id, db)
     follower_count = await FollowRepository.get_number_of_followers(user_id, db)
+
     return UserProfile(user=User.from_db_model(user), following_count=following_count, follower_count=follower_count)
 
 
