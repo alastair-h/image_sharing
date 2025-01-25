@@ -3,6 +3,9 @@ from http import HTTPStatus
 
 from sqlalchemy import text
 
+from src.models.image_model import ImagePostModel
+from src.models.user_model import UserModel
+
 
 def test_post_image(client, db_session) -> None:
     user_data = {"username": "test_user", "email": "testuser@example.org"}
@@ -50,7 +53,7 @@ def test_too_long_caption_raises_error(client, db_session) -> None:
         headers={"content-type": "application/json"},
         json=image_post_data,
     )
-    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert response.status_code == HTTPStatus.BAD_REQUEST
     assert response.json() == {'detail': [
         {'loc': ['body', 'caption'], 'msg': 'ensure this value has at most 100 characters',
          'type': 'value_error.any_str.max_length', 'ctx': {'limit_value': 100}}]}
@@ -74,7 +77,9 @@ def test_user_not_found(client, db_session) -> None:
 
 
 def test_no_timestamp_raises_error(client, db_session) -> None:
-    user_data = {"username": "test_user", "email": "testuser@example.org"}  # TODO: move to fixture, use db directly
+    user_data = {"username": "test_user",
+                 "email": "testuser@example.org"}  # TODO: move to fixture, use db directly
+
     client.post(
         "/signup_user",
         headers={"content-type": "application/json"},
@@ -91,4 +96,29 @@ def test_no_timestamp_raises_error(client, db_session) -> None:
         json=image_post_data,
     )
 
-    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
+def test_get_posts(client, db_session):
+    user = UserModel(username="test_user", email="test_user@example.com")
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)  # Ensure `id` is populated
+
+    post1 = ImagePostModel(image_url="http://example.com/image1.jpg", caption="First Post", user_id=user.id, timestamp=datetime.now(timezone.utc))
+    post2 = ImagePostModel(image_url="http://example.com/image2.jpg", caption="Second Post", user_id=user.id,  timestamp=datetime.now(timezone.utc))
+
+    db_session.add_all([post1, post2])
+    db_session.commit()
+
+    response = client.get(f"/get_posts/{user.id}")
+
+    assert response.status_code == HTTPStatus.OK
+    response_data = response.json()
+
+    assert len(response_data) == 2
+
+    assert any(post["image_url"] == "http://example.com/image1.jpg" for post in response_data)
+    assert any(post["image_url"] == "http://example.com/image2.jpg" for post in response_data)
+    assert any(post["caption"] == "First Post" for post in response_data)
+    assert any(post["caption"] == "Second Post" for post in response_data)

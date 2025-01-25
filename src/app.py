@@ -1,14 +1,18 @@
-import http
 from datetime import datetime
 from http import HTTPStatus
 
 from fastapi import FastAPI, Response, Depends
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import select
+from starlette.requests import Request
 
 from src.models.image_model import ImagePostModel
+from src.models.likes_juction_table import likes
 from src.models.user_model import UserModel
 
 app = FastAPI()
@@ -46,16 +50,25 @@ class User(BaseModel):
     username: str
     email: str
 
+class LikePost(BaseModel):
+    post_id: int
+    user_id: int
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    # needed to return 400 not 422
+    return JSONResponse(
+        status_code=HTTPStatus.BAD_REQUEST,
+        content=jsonable_encoder({"detail": exc.errors()}),
+    )
+
 
 @app.get("/")
 def hello_world():
     return {"message": "Hello, World!"}
 
 
-@app.post("/create_post", status_code=HTTPStatus.OK, responses={
-    # HTTPStatus.OK: {"description": "OK - Post processed successfully"},  # always creates a new post
-    HTTPStatus.CREATED: {"description": "Created - Post successfully created"},
-}, )
+@app.post("/create_post", status_code=HTTPStatus.CREATED, )
 async def image_post(image_post_data: ImagePost,
                      response: Response,
                      db: AsyncSession = Depends(get_async_session)) -> ImagePost:
@@ -66,21 +79,17 @@ async def image_post(image_post_data: ImagePost,
         return {"detail": "User not found"}
 
     new_image = ImagePostModel(image_url=image_post_data.image_url,
-                           caption=image_post_data.caption,
-                           email_of_poster=image_post_data.email_of_poster,
-                           user_id=user.id,
-                           timestamp=image_post_data.timestamp)
+                               caption=image_post_data.caption,
+                               email_of_poster=image_post_data.email_of_poster,
+                               user_id=user.id,
+                               timestamp=image_post_data.timestamp)
     db.add(new_image)
     await db.commit()
-    response.status_code = http.HTTPStatus.CREATED
     return image_post_data
 
 
-@app.post("/signup_user", status_code=HTTPStatus.OK, responses={
-    HTTPStatus.CREATED: {"description": "Created - user successfully created"},
-}, )
+@app.post("/signup_user", status_code=HTTPStatus.CREATED)
 async def user_signup(user_data: User,
-                      response: Response,
                       db: AsyncSession = Depends(get_async_session)) -> User:
     new_user = UserModel(
         username=user_data.username,
@@ -89,6 +98,27 @@ async def user_signup(user_data: User,
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
-
-    response.status_code = HTTPStatus.CREATED
     return new_user
+
+
+@app.get("/get_posts/{user_id}", status_code=HTTPStatus.OK, responses={
+    HTTPStatus.OK: {"model": ImagePost},
+    HTTPStatus.NOT_FOUND: {"model": None}
+})
+async def get_posts(user_id: int,
+                    db: AsyncSession = Depends(get_async_session)):
+    result = await db.execute(select(ImagePostModel).where(ImagePostModel.user_id == user_id))
+    posts = result.scalars().all()
+    if not posts:
+        return None
+    return posts
+
+
+@app.post("/like_post", status_code=HTTPStatus.OK)
+async def like_post(like_data: LikePost,
+                    db: AsyncSession = Depends(get_async_session)):
+    await db.execute(likes.insert().values(post_id=like_data.post_id, user_id=like_data.user_id))
+    await db.commit()
+    return {"detail": "Post liked"}
+
+

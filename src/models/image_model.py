@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.models.base import Base
+from src.models.likes_juction_table import likes
 
 
 class ImagePostModel(Base):
@@ -19,4 +20,13 @@ class ImagePostModel(Base):
     user: Mapped["UserModel"] = relationship(
         "UserModel", back_populates="image_posts"
     )
+
+    liked_by_users = relationship(
+        "UserModel",
+        secondary=likes,  # Reference to the association table
+        back_populates="liked_posts",
+    )
+
+    
+
 
