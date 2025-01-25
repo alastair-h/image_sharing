@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.follows_junction_table import follows
@@ -39,13 +39,17 @@ class FollowRepository:
 
     @staticmethod
     async def get_number_of_followers(user_id: int, db: AsyncSession) -> int:
-        # TODO:
-        pass
+        result = await db.execute(
+            select(func.count()).select_from(follows).where(follows.c.following == user_id)
+        )
+        return result.scalar() or 0
 
     @staticmethod
     async def get_number_of_following(user_id: int, db: AsyncSession) -> int:
-        # TODO:
-        pass
+        result = await db.execute(
+            select(func.count()).select_from(follows).where(follows.c.follower == user_id)
+        )
+        return result.scalar() or 0
 
     @staticmethod
     async def get_list_following_ids(user_id: int, db: AsyncSession) -> List[int]:

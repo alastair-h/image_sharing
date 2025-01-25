@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from typing import Self
 
 from fastapi import FastAPI, Depends
 from fastapi.encoders import jsonable_encoder
@@ -10,6 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from starlette.requests import Request
 
 from src.dtos.image_post import ImagePost
+from src.models.user_model import UserModel
 from src.repositories.follow_repository import FollowRepository
 from src.repositories.image_post_repository import ImagePostRepository
 from src.repositories.like_repository import LikeRepository
@@ -40,9 +42,22 @@ async def get_async_session():
         yield async_sess
 
 
-class User(BaseModel):
-    username: str
+class User(BaseModel):  # TODO: think about whether to expose ID to frontend, mostly working with IDs, but don't want to expose implementation
+    username: str  # TODO: could use hash
     email: str
+
+    @staticmethod
+    def from_db_model(user_db_model: UserModel) -> Self:
+        return User(
+            username=user_db_model.username,
+            email=user_db_model.email
+        )
+
+
+class UserProfile(BaseModel):
+    user: User
+    following_count: int
+    follower_count: int
 
 
 class LikePost(BaseModel):
@@ -137,17 +152,23 @@ async def follow_user(follow_user_request: FollowUserRequest, db: AsyncSession =
 
 # TODO: unfollow_user
 
-@app.get("/get_following_list/{user_id}", status_code=HTTPStatus.OK)
+@app.get("/get_following_list/{user_id}", status_code=HTTPStatus.OK)  # TODO: rename remove get
 async def get_following_list(user_id: int, db: AsyncSession = Depends(get_async_session)):
     # get a list of everyone this user is following
     following_list = await FollowRepository.get_list_users_user_is_following(user_id, db)
     return {"following": following_list}
 
 
-#def get follower count for user id TODO:
-
-#def get folloing count for user id TODO:
-
+@app.get("/user_profile")
+async def get_user_profile(user_id: int, db: AsyncSession = Depends(get_async_session)) -> UserProfile:
+    user: UserModel = await UserRepository.get_user_by_id(user_id, db)
+    if not user:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="user not found")
+    following_count = await FollowRepository.get_number_of_following(user_id, db)
+    follower_count = await FollowRepository.get_number_of_followers(user_id, db)
+    return UserProfile(user=User.from_db_model(user),
+                       following_count=following_count,
+                       follower_count=follower_count)
 
 
 @app.get("/get_posts_from_user/{user_id}", status_code=HTTPStatus.OK)
@@ -207,4 +228,3 @@ async def get_mutual_followers(user_id_1: int, user_id_2: int, db: AsyncSession 
     users_following_user_2 = await FollowRepository.get_list_user_ids_following_user(user_id_2, db)
     common = [x for x in users_following_user_1 if x in users_following_user_2]
     return {"mutual followers": common}
-
