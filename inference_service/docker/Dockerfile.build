@@ -1,0 +1,23 @@
+FROM python:3.11-slim-bullseye
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app
+  
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install --no-install-recommends -y build-essential libpq-dev libmagic1 libmagic-dev gettext libmagic1 libmagic-dev
+
+RUN mkdir -p /app/model_cache  # create a directory for the model cache
+ENV TFHUB_CACHE_DIR=/app/model_cache
+
+
+#COPY poetry.lock /app/
+COPY pyproject.toml /app/
+COPY requirements.txt /app/
+RUN pip install -r requirements.txt  # build problems with poetry, so using pip for now
+
+EXPOSE 8080
+
+CMD ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "8080"]
