@@ -46,7 +46,7 @@ async def get_async_session():
 class User(
     BaseModel
 ):  # TODO: think about whether to expose ID to frontend, mostly working with IDs, but don't want to expose implementation
-    username: str  # TODO: could use hash
+    username: str
     email: str
 
     @staticmethod
