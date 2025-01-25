@@ -1,0 +1,57 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  ci:
+    name: Run CI Pipeline
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@master
+
+      - name: Install Docker Compose
+        run: |
+            sudo apt-get update -y
+            sudo apt-get install -y docker-compose
+
+      - name: Start services
+        run: docker-compose -f docker-compose.yaml up -d
+
+      # wait for the database to be ready
+      - name: Wait for Postgres
+        run: |
+          for i in {1..10}; do
+            if docker exec $(docker ps -qf "name=db") pg_isready -U image_sharing_user; then
+              echo "Postgres is ready"; break
+            fi
+            echo "Waiting for Postgres..."; sleep 5
+          done
+
+      - name: make migrations
+        run: make migrate-head
+
+      - name: Run coverage tests
+        run: make coverage-tests
+
+      - name: Run static analysis tests
+        run: make static-tests
+
+      - name: Run formatting checks
+        run: make format
+
+      - name: Stop services
+        if: always()
+        run: docker-compose -f docker-compose.yaml down
+

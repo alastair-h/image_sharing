@@ -2,3 +2,13 @@ build:
 	./scripts/build.sh
 bash:
 	./scripts/bash.sh
+migrate-head:
+	./scripts/migrate-head.sh
+attach-db:
+	./scripts/attach-db.sh
+coverage-tests:
+	./scripts/coverage-tests.sh
+format:
+	./scripts/format.sh
+static-tests:
+	./scripts/static-tests.sh
