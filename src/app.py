@@ -1,11 +1,12 @@
 from http import HTTPStatus
-from typing import Self
+from typing import Self, AsyncGenerator
 
 from fastapi import Depends, FastAPI
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from starlette.requests import Request
@@ -21,8 +22,8 @@ app = FastAPI()
 DATABASE_URL = "postgresql+asyncpg://image_sharing_user:image_sharing_password@db:5432/image_sharing_db"
 
 
-def get_async_engine() -> AsyncEngine:  # TODO: review this, are we making an engine for each request?
-    # does fast api provide a singleton pattern here?
+def get_async_engine() -> AsyncEngine:
+
     async_engine: AsyncEngine = create_async_engine(
         DATABASE_URL,
         future=True,
@@ -145,6 +146,7 @@ async def follow_user(follow_user_request: FollowUserRequest, db: AsyncSession =
     await FollowRepository.follow_user(follow_user_request.follower_user_id, follow_user_request.following_user_id, db)
     return {"detail": "Followed successfully"}
 
+
 @app.get("/get_following_list/{user_id}", status_code=HTTPStatus.OK)  # TODO: rename remove get
 async def get_following_list(user_id: int, db: AsyncSession = Depends(get_async_session)):
     # get a list of everyone this user is following
@@ -180,17 +182,6 @@ async def get_posts_from_following(user_id: int, db: AsyncSession = Depends(get_
     return {"posts": sorted_list}
 
 
-"""
-List posts from followed users (sorted by most recent) and all posts (sorted
-by number of likes).
-
->  and all posts (sorted
-by number of likes).
-
-I take this to mean created a list of most liked posts across all users
-"""
-
-
 @app.get("/get_most_liked_posts", status_code=HTTPStatus.OK)
 async def get_most_liked_posts(db: AsyncSession = Depends(get_async_session)):
     """
@@ -201,11 +192,6 @@ async def get_most_liked_posts(db: AsyncSession = Depends(get_async_session)):
 
     I intentionally don't return the number of likes for each post: I imagine this to be used to make a 'trending' page
     """
-
-    # TODO: look into the efficiency of this because its a lot of data. we might need to denormalize the data
-    # we also should consider pagination, using a limit properly
-
-    # should just get the table likes, and the count of likes for each post
     posts = await LikeRepository.get_most_liked_posts(db)
     return {"most_liked_posts": posts}
 
@@ -220,22 +206,6 @@ async def get_mutual_followers(user_id_1: int, user_id_2: int, db: AsyncSession 
     users_following_user_2 = await FollowRepository.get_list_user_ids_following_user(user_id_2, db)
     common = [x for x in users_following_user_1 if x in users_following_user_2]
     return {"mutual followers": common}
-
-
-async def get_suggested_users():
-    """
-    given user a, user b, user c user d, user e, user f
-
-    user a follows user b, and user d also follows user b.
-    user e follows user c.
-    user f follows user b.
-    users a, d, f should be more likely to follow each other,
-    vs user e or user c, who seemingly have no relation
-
-    TODO: to me, suggested follower is the same as mutual followers unless we are looking to delve into graph theory here.
-    suggestions based on mutual followers with one node of depth is already provided in get_mutual_followers.
-    """
-    pass
 
 
 @app.get("/get_sharable_link/{post_id}", status_code=HTTPStatus.CREATED)

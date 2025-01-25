@@ -57,8 +57,6 @@ class ImagePostRepository:
         # Update the post with the generated UUID
         await db.execute(update(ImagePostModel).where(ImagePostModel.id == post_id).values(link_uuid=new_uuid))
         await db.commit()
-
-        # Return the shareable link
         return f"https://app.com/posts/{new_uuid}"
 
     @staticmethod

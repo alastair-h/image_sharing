@@ -37,8 +37,3 @@ class UserModel(Base):
     def following(self):  # TODO: maybe move towards a repository pattern with our Models
         # syntactic sugar
         return self.following_relationship
-
-    @property
-    def followers(self):
-        # this is just syntactic sugar so we knows this even exists
-        return self.__dict__.get("followers_relationship", [])
