@@ -1,12 +1,13 @@
 from logging.config import fileConfig
+
+from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
-from alembic import context
 
+from src.db.database import DATABASE_URL
 from src.models.base import Base
 from src.models.image_model import ImagePostModel  # noqa: F401
 from src.models.user_model import UserModel  # noqa: F401
-from src.db.database import DATABASE_URL
 
 # 1) Configure Alembic
 config = context.config

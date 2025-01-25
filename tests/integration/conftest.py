@@ -1,9 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
 from pytest import fixture
-from sqlalchemy import text, create_engine
-from sqlalchemy.orm import Session
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import Session, sessionmaker
 
 from src.app import app
 

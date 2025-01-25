@@ -1,7 +1,6 @@
-from sqlalchemy import Table, Column, ForeignKey
+from sqlalchemy import Column, ForeignKey, Table
 
 from src.models.base import Base
-
 
 follows = Table(
     "follows",
