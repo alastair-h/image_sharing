@@ -1,2 +1,2 @@
-docker-compose exec api alembic upgrade "head"
+docker-compose  run --rm api alembic upgrade "head"
 
