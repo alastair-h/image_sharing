@@ -43,7 +43,7 @@ jobs:
         run: ls -la
 
       - name: make migrations
-        run: make migrations
+        run: make migrate-head
 
       - name: Run coverage tests
         run: make coverage-tests
