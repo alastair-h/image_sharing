@@ -1,20 +1,20 @@
 from datetime import datetime
 from http import HTTPStatus
 
-from fastapi import FastAPI, Response, Depends
+from fastapi import FastAPI, Depends
 from fastapi.encoders import jsonable_encoder
-from fastapi.exceptions import RequestValidationError
+from fastapi.exceptions import RequestValidationError, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine
 from sqlalchemy.orm import sessionmaker
 from starlette.requests import Request
 
-from src.models.follows_junction_table import follows
-from src.models.image_model import ImagePostModel
-from src.models.likes_juction_table import likes
-from src.models.user_model import UserModel
+from src.dtos.image_post import ImagePost
+from src.repositories.follow_repository import FollowRepository
+from src.repositories.image_post_repository import ImagePostRepository
+from src.repositories.like_repository import LikeRepository
+from src.repositories.user_repository import UserRepository
 
 app = FastAPI()
 DATABASE_URL = "postgresql+asyncpg://image_sharing_user:image_sharing_password@db:5432/image_sharing_db"
@@ -35,17 +35,10 @@ async def get_async_session():
         bind=get_async_engine(),
         class_=AsyncSession,
         autoflush=False,
-        expire_on_commit=False,  # TODO: understand this better
+        expire_on_commit=False,
     )
     async with async_session() as async_sess:
         yield async_sess
-
-
-class ImagePost(BaseModel):
-    image_url: str
-    caption: str = Field(..., max_length=100)
-    timestamp: datetime
-    email_of_poster: str  #
 
 
 class User(BaseModel):
@@ -77,65 +70,49 @@ def hello_world():
     return {"message": "Hello, World!"}
 
 
-@app.post("/create_post", status_code=HTTPStatus.CREATED, )
-async def image_post(image_post_data: ImagePost,
-                     response: Response,
-                     db: AsyncSession = Depends(get_async_session)) -> ImagePost:
-    result = await db.execute(select(UserModel).where(UserModel.email == image_post_data.email_of_poster))
-    user = result.scalars().one_or_none()
+@app.post("/create_post", status_code=HTTPStatus.CREATED)
+async def image_post(image_post_data: ImagePost, db: AsyncSession = Depends(get_async_session)) -> ImagePost:
+    user = await UserRepository.get_user_by_email(image_post_data.email_of_poster, db)
     if not user:
-        response.status_code = HTTPStatus.BAD_REQUEST
-        return {"detail": "User not found"}
+        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="User not found")
 
-    new_image = ImagePostModel(image_url=image_post_data.image_url,
-                               caption=image_post_data.caption,
-                               email_of_poster=image_post_data.email_of_poster,
-                               user_id=user.id,
-                               timestamp=image_post_data.timestamp)
-    db.add(new_image)
-    await db.commit()
-    return image_post_data
+    new_post = await ImagePostRepository.create_post(
+        image_url=image_post_data.image_url,
+        caption=image_post_data.caption,
+        email_of_poster=image_post_data.email_of_poster,
+        user_id=user.id,
+        timestamp=image_post_data.timestamp,
+        db=db
+    )  # TODO: consider whether to return the whole post including id
+    return new_post
 
 
 @app.post("/signup_user", status_code=HTTPStatus.CREATED)
-async def user_signup(user_data: User,
-                      db: AsyncSession = Depends(get_async_session)) -> User:
-    new_user = UserModel(
-        username=user_data.username,
-        email=user_data.email,
-    )
-    db.add(new_user)
-    await db.commit()
-    await db.refresh(new_user)
+async def user_signup(user_data: User, db: AsyncSession = Depends(get_async_session)) -> User:
+    new_user = await UserRepository.create_user(user_data.username, user_data.email, db)
     return new_user
 
 
-@app.get("/get_posts/{user_id}", status_code=HTTPStatus.OK, responses={
-    HTTPStatus.OK: {"model": ImagePost},
-    HTTPStatus.NOT_FOUND: {"model": None}
-})
-async def get_posts(user_id: int,
-                    db: AsyncSession = Depends(get_async_session)):
-    result = await db.execute(select(ImagePostModel).where(ImagePostModel.user_id == user_id))
-    posts = result.scalars().all()
+@app.get("/get_posts/{user_id}", status_code=HTTPStatus.OK)
+async def get_posts(user_id: int, db: AsyncSession = Depends(get_async_session)):
+    posts = await ImagePostRepository.get_posts_by_user_id(user_id, db)
     if not posts:
-        return None
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="No posts found")
     return posts
 
 
 @app.put("/like_post", status_code=HTTPStatus.OK)
-async def like_post(like_data: LikePost,
-                    db: AsyncSession = Depends(get_async_session)):
-    await db.execute(likes.insert().values(post_id=like_data.post_id, user_id=like_data.user_id))
-    await db.commit()
+async def like_post(like_data: LikePost, db: AsyncSession = Depends(get_async_session)):
+    if await LikeRepository.is_post_liked(like_data.post_id, like_data.user_id, db):
+        return {"detail": "Post already liked"}
+    await LikeRepository.like_post(like_data.post_id, like_data.user_id, db)
     return {"detail": "Post liked"}
 
 
-@app.put("/follow_user", status_code=HTTPStatus.OK)
-async def follow_user(follow_user_request: FollowUserRequest,
-                      db: AsyncSession = Depends(get_async_session)):
-    # TODO: if implementing auth, check that the user is the same as the one in the token, maybe we can simplify this
-    await db.execute(follows.insert().values(follower=follow_user_request.follower_user_id,
-                                             following=follow_user_request.following_user_id))
-    await db.commit()
-    # TODO: 404 if user not found
+@app.put("/follow_user", status_code=HTTPStatus.OK)  # TODO: look at how auth changes the scope of this
+async def follow_user(follow_user_request: FollowUserRequest, db: AsyncSession = Depends(get_async_session)):
+    if await FollowRepository.is_following(follow_user_request.follower_user_id, follow_user_request.following_user_id, db):
+        return {"detail": "Already following"}
+    await FollowRepository.follow_user(follow_user_request.follower_user_id, follow_user_request.following_user_id, db)
+    return {"detail": "Followed successfully"}
+
