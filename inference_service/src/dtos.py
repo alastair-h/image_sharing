@@ -1,8 +1,8 @@
 from pydantic import BaseModel
 
 
-class ClassificationRequest(BaseModel):
-    image_url: str
+class ImageUrl(BaseModel):
+    image_url: str  # can't send url as url paramater obviously
 
 
 class ClassificationResult(BaseModel):
@@ -12,4 +12,9 @@ class ClassificationResult(BaseModel):
 
 class ClassificationResponse(BaseModel):
     results: list[ClassificationResult]
+    inference_time_ms: float
+
+
+class CaptionResponse(BaseModel):
+    caption: str
     inference_time_ms: float
