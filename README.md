@@ -64,6 +64,7 @@ I've included a simple CI pipeline that runs against the API, running unit tests
 
 ### AI models
 
+#### Classifier
 I am using Mobile Net v2, I think it is a good all round option for real time image classification.
 This is easily downloaded from tensorflow hub, and with a set of standard weights we get useful results for
 image classification. There is a huge amount more that could be done here- no use of boundary boxes, no attempt to 
@@ -73,6 +74,15 @@ In terms of performance I think it is very good. On my Mac, using CPU it process
 I would predict at least a 10x improvement on a GPU. Time is money in the cloud, so I think this model is a good fit, for 
 a (presumably) non-critical task such as classifying a post.
 
+#### Captioning
+
+For Captioning, I have created an openai integration. I am using the 4o-mini model via API.
+I didn't find any easy to use pre-trained model available out of the box. 4o-mini provides
+quick and accurate image inference for around 1 cent a request. As this is an external service
+performance will depend on both the internet speed + region, and the openai's response time.
+It would seem to take around 1 second per request, again adequate for real time.
+
+Testing this requires an openai API key, which naturally I have not included in this public repo.
 
 ### Database schema
 

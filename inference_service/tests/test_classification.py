@@ -21,9 +21,9 @@ def test_get_caption_image() -> None:
         json=user_data,
     )
     assert response.status_code == HTTPStatus.OK
-    results = response.json()["results"]
+    results = response.json()["caption"]
     inference_time = response.json()["inference_time_ms"]
     assert inference_time < 5000.0  # I think that
     # sample response = 'An orange cat in a playful stance.
     # check that somewhere there is the word cat!
-    assert "cat" in str(results).lower()
+    assert "cat" in results.lower()

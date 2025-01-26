@@ -31,6 +31,8 @@ services:
       - ./inference_service/:/app  # TODO: use only necessary volumes
     ports:
       - "9000:9000"
+    environment:
+      OPENAI_API_KEY: "openapikey"
 
   db:
     image: postgres:15

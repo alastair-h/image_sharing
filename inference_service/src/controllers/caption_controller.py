@@ -1,6 +1,7 @@
 from typing import Dict
 
 from openai import OpenAI
+from openai import AuthenticationError
 
 
 class ImageCaptionController:
@@ -10,7 +11,14 @@ class ImageCaptionController:
         self.prompt = "provide a simple, neutral caption for this image"
 
     def get_caption_for_image(self, image_url: str) -> str:
-        response = self.client.chat.completions.create(
+        try:
+            response = self._call_openai_api(image_url)
+            return response.choices[0].message.content
+        except AuthenticationError:
+            raise Exception("Invalid OpenAI API key/ no API key provided.")
+
+    def _call_openai_api(self, image_url: str):  # TODO: add union type
+        return self.client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {
@@ -28,6 +36,5 @@ class ImageCaptionController:
             ],
             max_tokens=300,
         )
-        return response.choices[0].message.content
 
 
