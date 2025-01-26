@@ -1,7 +1,8 @@
-from typing import Dict
+from http import HTTPStatus
 
-from openai import OpenAI
+from fastapi import HTTPException
 from openai import AuthenticationError
+from openai import OpenAI
 
 
 class ImageCaptionController:
@@ -15,9 +16,9 @@ class ImageCaptionController:
             response = self._call_openai_api(image_url)
             return response.choices[0].message.content
         except AuthenticationError:
-            raise Exception("Invalid OpenAI API key/ no API key provided.")
+            raise HTTPException(status_code=HTTPStatus.UNAUTHORIZED, detail="Invalid or missing OpenAI API key.")
 
-    def _call_openai_api(self, image_url: str):  # TODO: add union type
+    def _call_openai_api(self, image_url: str):
         return self.client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[

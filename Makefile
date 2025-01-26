@@ -16,3 +16,5 @@ static-tests:
 	./scripts/static-tests.sh
 bash-ai:
 	./scripts/bash-ai.sh
+inference-tests:
+	./scripts/inference-tests.sh
