@@ -4,7 +4,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app
   
-#ARG POETRY_VERSION=2.0.1
 
 WORKDIR /app
 
@@ -17,6 +16,8 @@ ENV TFHUB_CACHE_DIR=/app/model_cache
 #COPY poetry.lock /app/
 COPY pyproject.toml /app/
 COPY requirements.txt /app/
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt  # build problems with poetry, so using pip for now
 
-CMD ["python3", "./script.py"]
+EXPOSE 8080
+
+CMD ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "8080"]

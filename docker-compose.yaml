@@ -26,7 +26,7 @@ services:
     build:
       context: ./inference_service
       dockerfile: docker/Dockerfile.build
-    command: [ "sleep", "infinity" ]
+    command: ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "9000", "--reload"]
     volumes:
       - ./inference_service/:/app  # TODO: use only necessary volumes
     ports:
