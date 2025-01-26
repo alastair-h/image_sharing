@@ -9,31 +9,24 @@ from src.models.likes_juction_table import likes
 class UserModel(Base):
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)  # since we are exposing this via API it is better to use UUID
     username: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    email: Mapped[str] = mapped_column(String, unique=True, nullable=False, index=True)  # index for faster lookup
 
-    # Relationship back to ImagePosts
-    # 'back_populates' must match the 'user' relationship in ImagePost
     image_posts: Mapped[list["ImagePostModel"]] = relationship(
         "ImagePostModel", back_populates="user", cascade="all, delete-orphan"
     )
 
     liked_posts = relationship(
         "ImagePostModel",
-        secondary=likes,  # Reference to the association table
+        secondary=likes,  #  association table
         back_populates="liked_by_users",
     )
 
-    following_relationship = relationship(
+    following = relationship(
         "UserModel",
         secondary=follows,
         primaryjoin=id == follows.c.follower,
         secondaryjoin=id == follows.c.following,
         backref="followers_relationship",
     )
-
-    @property
-    def following(self):  # TODO: maybe move towards a repository pattern with our Models
-        # syntactic sugar
-        return self.following_relationship

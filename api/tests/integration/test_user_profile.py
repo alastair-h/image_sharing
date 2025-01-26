@@ -25,7 +25,7 @@ def test_get_user_profile_success(client, db_session):
     )
     db_session.commit()
 
-    response = client.get(f"/user_profile?user_id={user.id}")
+    response = client.get(f"/user_profile?email={user.email}")
 
     assert response.status_code == HTTPStatus.OK
     response_data = response.json()

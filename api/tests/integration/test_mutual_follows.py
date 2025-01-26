@@ -38,10 +38,9 @@ def test_get_mutual_followers_success(client, db_session: AsyncSession):
     )
     db_session.commit()
 
-    response = client.get(f"/get_mutual_followers/{user_1.id}/{user_2.id}")
-
+    response = client.get(f"/get_mutual_followers/{user_1.email}/{user_2.email}")
     assert response.status_code == HTTPStatus.OK
     response_data = response.json()
     assert "mutual followers" in response_data
     mutual_followers_ids = response_data["mutual followers"]
-    assert sorted(mutual_followers_ids) == [mutual_follower_1.id, mutual_follower_2.id]
+    assert sorted(mutual_followers_ids) == [mutual_follower_1.email, mutual_follower_2.email]

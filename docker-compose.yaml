@@ -31,6 +31,11 @@ services:
       - ./inference_service/:/app  # TODO: use only necessary volumes
     ports:
       - "9000:9000"
+    environment:
+      MODEL_URL:  "https://tfhub.dev/google/tf2-preview/mobilenet_v2/classification/4"
+      LABELS_URL: "https://storage.googleapis.com/download.tensorflow.org/data/ImageNetLabels.txt"
+      OPENAI_API_KEY: "openapikey"
+      TFHUB_CACHE_DIR: "/app/model_cache"
 
   db:
     image: postgres:15

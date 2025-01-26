@@ -18,7 +18,7 @@ def test_follow_user_success(client, db_session) -> None:
     response = client.put(
         "/follow_user",
         headers={"content-type": "application/json"},
-        json={"follower_user_id": follower.id, "following_user_id": following.id},
+        json={"follower_user_email": follower.email, "following_user_email": following.email},
     )
 
     # Assert
@@ -38,7 +38,7 @@ def test_follow_user_follower_not_found(client, db_session) -> None:
     response = client.put(
         "/follow_user",
         headers={"content-type": "application/json"},
-        json={"follower_user_id": 999, "following_user_id": following.id},
+        json={"follower_user_email": "notexist@comp.com", "following_user_email": following.email},
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
@@ -56,12 +56,12 @@ def test_follow_user_idempotency(client, db_session) -> None:
     response1 = client.put(
         "/follow_user",
         headers={"content-type": "application/json"},
-        json={"follower_user_id": follower.id, "following_user_id": following.id},
+        json={"follower_user_email": follower.email, "following_user_email": following.email},
     )
     response2 = client.put(
         "/follow_user",
         headers={"content-type": "application/json"},
-        json={"follower_user_id": follower.id, "following_user_id": following.id},
+        json={"follower_user_email": follower.email, "following_user_email": following.email},
     )
 
     assert response1.status_code == HTTPStatus.OK
@@ -96,11 +96,9 @@ def test_get_following_list(client, db_session) -> None:
 
     # Act
 
-    response = client.get(f"/get_following_list/{user1.id}")
+    response = client.get(f"/get_following_list/{user1.email}")
     following = response.json()["following"]
-
     assert len(following) == 1
-    assert following[0]["id"] == user2.id
     assert following[0]["username"] == "user2"
 
     # Assert: user1 is not following user3

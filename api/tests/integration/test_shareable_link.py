@@ -12,7 +12,11 @@ def test_get_sharable_link_success(client, db_session):
     db_session.commit()
     db_session.refresh(user)
     post = ImagePostModel(
-        image_url="http://example.com/image.jpg", caption="Test Post", timestamp=datetime(2025, 1, 1), user_id=user.id
+        image_url="http://example.com/image.jpg",
+        caption="Test Post",
+        timestamp=datetime(2025, 1, 1),
+        user_id=user.id,
+        email_of_poster=user.email,
     )
     db_session.add(post)
     db_session.commit()
@@ -43,6 +47,7 @@ def test_get_post_by_public_link_success(client, db_session):
         image_url="http://example.com/image.jpg",
         caption="Test Post",
         link_uuid=str(uuid.uuid4()),
+        email_of_poster=user.email,
         user_id=user.id,
         timestamp=datetime.now(),
     )

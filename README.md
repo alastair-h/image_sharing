@@ -1,9 +1,12 @@
-TODO: erd
-
-Swagger Docs
-http://localhost:8000/doc
-
  # Python Developer Task
+### Alastair Hirst
+
+#### See this repo in action!
+
+https://asciinema.org/a/nCW5KakSHaUByau33YdSIJfvl
+
+ ## Overview
+
 
 This repository contains 3 services that together form the image sharing application
 
@@ -13,7 +16,7 @@ This repository contains 3 services that together form the image sharing applica
 
 This project uses a Makefile to easily start the services.
 Since the Inference service downloads the model automatically if not found locally, you must be online
-to start the inference service. 
+to start the inference service.
 
 ## Running the services
 ```bash
@@ -28,6 +31,8 @@ Once the services are up and running you can view and test the docs from their r
 API: http://localhost:8000/doc
 Inference Service: http://localhost:9000/doc
 
+
+
 ## Testing
 ```bash
 
@@ -41,7 +46,7 @@ $ make bash # open a bash shell in the API container
 
 $ make bash-ai # open a bash shell in the Inference container
 
-$ make inference-tests # Run the tests for the inference service  # TODO: make this exist
+$ make inference-tests # Run the tests for the inference service
 
 ```
 
@@ -64,6 +69,7 @@ I've included a simple CI pipeline that runs against the API, running unit tests
 
 ### AI models
 
+#### Classifier
 I am using Mobile Net v2, I think it is a good all round option for real time image classification.
 This is easily downloaded from tensorflow hub, and with a set of standard weights we get useful results for
 image classification. There is a huge amount more that could be done here- no use of boundary boxes, no attempt to 
@@ -72,6 +78,20 @@ to analyse the output, I am just returning the raw output from the model.
 In terms of performance I think it is very good. On my Mac, using CPU it processes in around 500ms, which is good enough for real time.
 I would predict at least a 10x improvement on a GPU. Time is money in the cloud, so I think this model is a good fit, for 
 a (presumably) non-critical task such as classifying a post.
+
+#### Captioning
+
+For Captioning, I have created an openai integration. I am using the 4o-mini model via API.
+I didn't find any easy to use pre-trained model available out of the box. 4o-mini provides
+quick and accurate image inference for around 1 cent a request. As this is an external service
+performance will depend on both the internet speed + region, and the openai's response time.
+It would seem to take around 1 second per request, again adequate for real time.
+
+Testing this requires an openai API key, which naturally I have not included in this public repo.
+
+There are also transformer based models, such as transformers from Hugging Face.
+It would have been interesting to explore these, I did not find something that would work out of the box.
+https://huggingface.co/docs/transformers/tasks/image_captioning
 
 
 ### Database schema
@@ -87,9 +107,16 @@ Sometimes it is useful to use raw SQL even with an ORM, especially when we have 
 Indexes:
 
 PSQL (not SQLite) creates indexes on the primary key by default, including composite PKs.
-to efficiently allow query of link ID I have added an index. Indexes slow down writes, but this is not normally a concern.
+to efficiently allow query of link ID, email I have added indexes. Indexes slow down writes, but this is not normally a concern.
 
+### microservices architecture
 
+The decision to use two separate services gives us several benefits:
+
+- we can reuse the inference service for other applications
+- we can scale the inference service independently
+- the CRUD api does not need to GPU, so we can run it on a cheaper instance
+- tensorflow makes dependency management difficult; it makes the API much easier to update and maintain
 
 #### TODO: add excalidraw ERD
 

@@ -21,12 +21,14 @@ def test_get_posts_from_user(client, db_session: AsyncSession) -> None:
         ImagePostModel(
             image_url="http://example.com/image1.jpg",
             caption="Post 1",
+            email_of_poster=user1.email,
             user_id=user1.id,
             timestamp=datetime.now(timezone.utc),
         ),
         ImagePostModel(
             image_url="http://example.com/image2.jpg",
             caption="Post 2",
+            email_of_poster=user1.email,
             user_id=user1.id,
             timestamp=datetime.now(timezone.utc),
         ),
@@ -35,12 +37,14 @@ def test_get_posts_from_user(client, db_session: AsyncSession) -> None:
         ImagePostModel(
             image_url="http://example.com/image3.jpg",
             caption="Post 3",
+            email_of_poster=user2.email,
             user_id=user2.id,
             timestamp=datetime.now(timezone.utc),
         ),
         ImagePostModel(
             image_url="http://example.com/image4.jpg",
             caption="Post 4",
+            email_of_poster=user2.email,
             user_id=user2.id,
             timestamp=datetime.now(timezone.utc),
         ),
@@ -49,7 +53,7 @@ def test_get_posts_from_user(client, db_session: AsyncSession) -> None:
     db_session.commit()
 
     # Act: Make a request to fetch posts for user1
-    response = client.get(f"/get_posts_from_user/{user1.id}")
+    response = client.get(f"/get_posts_from_user/{user1.email}")
 
     # Assert: Ensure the response contains only posts from user1
     assert response.status_code == HTTPStatus.OK
@@ -90,12 +94,14 @@ def __setup_get_posts_from_following(passed_session: AsyncSession) -> UserModel:
     post1 = ImagePostModel(
         image_url="http://example.com/image1.jpg",
         caption="Post 1",
+        email_of_poster=following_1.email,
         user_id=following_1.id,
         timestamp=datetime(2025, 1, 1, tzinfo=timezone.utc),
     )
     post2 = ImagePostModel(
         image_url="http://example.com/image2.jpg",
         caption="Post 2",
+        email_of_poster=following_2.email,
         user_id=following_2.id,
         timestamp=datetime(2025, 1, 2, tzinfo=timezone.utc),
     )
@@ -103,6 +109,7 @@ def __setup_get_posts_from_following(passed_session: AsyncSession) -> UserModel:
     post_3 = ImagePostModel(
         image_url="http://example.com/image3.jpg",
         caption="Post 3",
+        email_of_poster=not_following.email,
         user_id=not_following.id,
         timestamp=datetime(2025, 1, 3, tzinfo=timezone.utc),
     )
@@ -110,18 +117,19 @@ def __setup_get_posts_from_following(passed_session: AsyncSession) -> UserModel:
     post_4 = ImagePostModel(
         image_url="http://example.com/image4.jpg",
         caption="Post 4",
+        email_of_poster=following_2.email,
         user_id=following_2.id,
         timestamp=datetime(2025, 1, 4, tzinfo=timezone.utc),
     )
     passed_session.add_all([post1, post2, post_3, post_4])
     passed_session.commit()
+
     return user
 
 
 def test_get_posts_from_following_success(client, db_session: AsyncSession):
     user = __setup_get_posts_from_following(db_session)
-
-    response = client.get(f"/get_posts_from_following/{user.id}")
+    response = client.get(f"/get_posts_from_following/{user.email}")
 
     assert response.status_code == HTTPStatus.OK
     response_data = response.json()
