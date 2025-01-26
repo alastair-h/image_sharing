@@ -1,12 +1,12 @@
+from http import HTTPStatus
 from io import BytesIO
 
 import numpy as np
 import requests
 import tensorflow as tf
 import tensorflow_hub as hub
-from PIL import Image
 from fastapi import HTTPException
-from http import HTTPStatus
+from PIL import Image
 
 from src.dtos import ClassificationResult
 
@@ -51,8 +51,9 @@ class ImageClassificationController:
             response = requests.get(image_url, timeout=10)
             response.raise_for_status()
         except requests.RequestException:
-            raise HTTPException(status_code=HTTPStatus.BAD_REQUEST,
-                                detail="Failed to download image from the provided URL.")
+            raise HTTPException(
+                status_code=HTTPStatus.BAD_REQUEST, detail="Failed to download image from the provided URL."
+            )
 
         content_type = response.headers.get("Content-Type", "")
         if "image" not in content_type.lower():

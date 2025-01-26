@@ -22,6 +22,7 @@ image_classification_service = ImageClassificationController(model_url=MODEL_URL
 def hello_world():
     return {"message": "Hello, World!"}
 
+
 @app.post("/classify", response_model=ClassificationResponse)
 def classify_image(request: ClassificationRequest):
 
@@ -30,7 +31,4 @@ def classify_image(request: ClassificationRequest):
     end_time = time.perf_counter()
     inference_time_ms = (end_time - start_time) * 1000.0
 
-    return ClassificationResponse(
-        results=results,
-        inference_time_ms=inference_time_ms
-    )
+    return ClassificationResponse(results=results, inference_time_ms=inference_time_ms)

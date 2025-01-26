@@ -8,9 +8,12 @@ from src.app import app
 def client() -> TestClient:
     return TestClient(app)
 
+
 def test_post_image() -> None:
     client = TestClient(app=app)
-    sample_cat_image = "https://i.natgeofe.com/n/4cebbf38-5df4-4ed0-864a-4ebeb64d33a4/NationalGeographic_1468962_16x9.jpg"
+    sample_cat_image = (
+        "https://i.natgeofe.com/n/4cebbf38-5df4-4ed0-864a-4ebeb64d33a4/NationalGeographic_1468962_16x9.jpg"
+    )
     user_data = {"image_url": sample_cat_image}
     response = client.post(
         "/classify",
