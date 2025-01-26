@@ -10,6 +10,8 @@ from PIL import Image
 MODEL_URL = "https://tfhub.dev/google/tf2-preview/mobilenet_v2/classification/4"
 LABELS_URL = "https://storage.googleapis.com/download.tensorflow.org/data/ImageNetLabels.txt"
 
+os.environ["TFHUB_CACHE_DIR"] = "/app/model_cache"
+
 # 2. Load the model from TF Hub
 print("Loading MobileNetV2 model from TensorFlow Hub...")
 model = hub.load(MODEL_URL)

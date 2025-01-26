@@ -12,3 +12,5 @@ format:
 	./scripts/format.sh
 static-tests:
 	./scripts/static-tests.sh
+bash-ai:
+	./scripts/bash-ai.sh
