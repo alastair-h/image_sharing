@@ -19,6 +19,21 @@ class ImageClassificationController:
         self.labels = None
         self._load_model_and_labels()
 
+    def classify_image(self, image_url: str) -> list[ClassificationResult]:
+
+        pil_image = self._download_image_from_url(image_url)
+        img_tensor = self._load_image_and_resize(pil_image)
+        predictions = self.model(img_tensor).numpy().squeeze()
+
+        top_indices = predictions.argsort()[-5:][::-1]  # get top 5 predictions
+
+        results = []
+        for i in top_indices:
+            class_name = self.labels[i]
+            score = float(predictions[i])
+            results.append(ClassificationResult(class_name=class_name, score=score))
+        return results
+
     def _load_model_and_labels(self):
 
         print("Loading MobileNetV2 model from TensorFlow Hub...")
@@ -29,13 +44,15 @@ class ImageClassificationController:
         with open(labels_path, "r") as f:
             self.labels = f.read().splitlines()
 
-    def download_image_from_url(self, image_url: str) -> Image.Image:
+    @staticmethod
+    def _download_image_from_url(image_url: str) -> Image.Image:
 
         try:
             response = requests.get(image_url, timeout=10)
             response.raise_for_status()
         except requests.RequestException:
-            raise HTTPException(status_code=HTT, detail="Failed to download image from the provided URL.")
+            raise HTTPException(status_code=HTTPStatus.BAD_REQUEST,
+                                detail="Failed to download image from the provided URL.")
 
         content_type = response.headers.get("Content-Type", "")
         if "image" not in content_type.lower():
@@ -46,25 +63,11 @@ class ImageClassificationController:
         except Exception:
             raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="Unable to process the downloaded image.")
 
-    def load_image_and_resize(self, pil_image: Image.Image, image_size=(224, 224)) -> np.ndarray:
+    @staticmethod
+    def _load_image_and_resize(pil_image: Image.Image, image_size=(224, 224)) -> np.ndarray:
 
         img = pil_image.resize(image_size)
         img = np.array(img) / 255.0
         img = img.astype(np.float32)
         img = np.expand_dims(img, axis=0)
         return img
-
-    def classify_image(self, image_url: str) -> list[ClassificationResult]:
-
-        pil_image = self.download_image_from_url(image_url)
-        img_tensor = self.load_image_and_resize(pil_image)
-        predictions = self.model(img_tensor).numpy().squeeze()  # shape (1001,)
-
-        top_indices = predictions.argsort()[-5:][::-1]  # get top 5 predictions
-
-        results = []
-        for i in top_indices:
-            class_name = self.labels[i]
-            score = float(predictions[i])
-            results.append(ClassificationResult(class_name=class_name, score=score))
-        return results

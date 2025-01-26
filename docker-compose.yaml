@@ -19,7 +19,7 @@ services:
       POSTGRES_PORT: "5432"
 
     depends_on:
-      - db  # TODO: dependes on ai
+      - db  # TODO: depends on ai
 
 
   inference_service:
