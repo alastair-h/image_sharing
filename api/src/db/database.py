@@ -1,20 +1,29 @@
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from os import getenv
+
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-POSTGRES_DB = "image_sharing_db"
-POSTGRES_USER = "image_sharing_user"
-POSTGRES_PASSWORD = "image_sharing_password"
-POSTGRES_HOST = "db"
-POSTGRES_PORT = "5432"
-
-DATABASE_URL = (
-    f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
-)
-
-engine = create_async_engine(DATABASE_URL, echo=True)
-async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+db_name = getenv("POSTGRES_DB")
+user = getenv("POSTGRES_USER")
+pw = getenv("POSTGRES_PASSWORD")
+DATABASE_URL = f"postgresql+asyncpg://{user}:{pw}@db:5432/{db_name}"
 
 
-async def get_session():
-    async with async_session() as session:
-        yield session
+def get_async_engine() -> AsyncEngine:  # TODO: use Singleton pattern with DI
+    async_engine: AsyncEngine = create_async_engine(
+        DATABASE_URL,
+        future=True,
+    )
+
+    return async_engine
+
+
+async def get_async_session():
+    async_session = sessionmaker(
+        bind=get_async_engine(),
+        class_=AsyncSession,
+        autoflush=False,
+        expire_on_commit=False,
+    )
+    async with async_session() as async_sess:
+        yield async_sess

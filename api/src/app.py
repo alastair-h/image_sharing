@@ -1,14 +1,13 @@
 from http import HTTPStatus
-from os import getenv
 
 from fastapi import Depends, FastAPI
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.responses import JSONResponse
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 
+from src.db.database import get_async_session
 from src.dtos.follow_request import FollowUserRequest
 from src.dtos.image_post import ImagePost
 from src.dtos.like_post import LikePost
@@ -21,30 +20,6 @@ from src.repositories.like_repository import LikeRepository
 from src.repositories.user_repository import UserRepository
 
 app = FastAPI()
-db_name = getenv("POSTGRES_DB")
-user = getenv("POSTGRES_USER")
-pw = getenv("POSTGRES_PASSWORD")
-DATABASE_URL = f"postgresql+asyncpg://{user}:{pw}@db:5432/{db_name}"
-
-
-def get_async_engine() -> AsyncEngine:
-    async_engine: AsyncEngine = create_async_engine(
-        DATABASE_URL,
-        future=True,
-    )
-
-    return async_engine
-
-
-async def get_async_session():
-    async_session = sessionmaker(
-        bind=get_async_engine(),
-        class_=AsyncSession,
-        autoflush=False,
-        expire_on_commit=False,
-    )
-    async with async_session() as async_sess:
-        yield async_sess
 
 
 @app.exception_handler(RequestValidationError)
