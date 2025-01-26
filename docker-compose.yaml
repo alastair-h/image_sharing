@@ -3,11 +3,11 @@
 services:
   api:
     build:
-      context: .
+      context: ./api
       dockerfile: docker/Dockerfile.build
     command:  ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     volumes:
-      - .:/app  # TODO: use only necessary volumes
+      - ./api/:/app  # TODO: use only necessary volumes
     ports:
       - "8000:8000"
     environment:
@@ -19,7 +19,18 @@ services:
       POSTGRES_PORT: "5432"
 
     depends_on:
-      - db
+      - db  # TODO: depends on ai
+
+
+  inference_service:
+    build:
+      context: ./inference_service
+      dockerfile: docker/Dockerfile.build
+    command: ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "9000", "--reload"]
+    volumes:
+      - ./inference_service/:/app  # TODO: use only necessary volumes
+    ports:
+      - "9000:9000"
 
   db:
     image: postgres:15
