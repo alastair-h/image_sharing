@@ -19,7 +19,6 @@ uvicorn = "^0.15.0"
 sqlalchemy = "^2.0.37"
 alembic = "^1.14.1"
 asyncpg = "^0.30.0"
-pytest-asyncio = "^0.25.2"  # TODO: Remove this line
 numpy = "1.23.5"
 tensorflow = "^2.13.0"
 tensorflow-io-gcs-filesystem = "0.37.1"

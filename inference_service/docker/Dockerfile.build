@@ -1,0 +1,19 @@
+FROM python:3.11-slim-bullseye
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app
+  
+#ARG POETRY_VERSION=2.0.1
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install --no-install-recommends -y build-essential libpq-dev libmagic1 libmagic-dev gettext libmagic1 libmagic-dev
+
+
+#COPY poetry.lock /app/
+COPY pyproject.toml /app/
+COPY requirements.txt /app/
+RUN pip install -r requirements.txt
+
+CMD ["python3", "./script.py"]
