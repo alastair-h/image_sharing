@@ -2,6 +2,8 @@ build:
 	./scripts/build.sh
 bash:
 	./scripts/bash.sh
+start:
+	./scripts/start.sh
 migrate-head:
 	./scripts/migrate-head.sh
 attach-db:
