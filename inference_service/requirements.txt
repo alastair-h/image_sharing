@@ -7,3 +7,4 @@ uvicorn==0.34.0
 pytest==8.3.4
 httpx==0.28.1
 openai==1.60.1
+dependency_injector==4.45.0

@@ -1,5 +1,5 @@
 from fastapi.testclient import TestClient
-from pytest import fixture
+from pytest import fixture, mark
 from http import HTTPStatus
 from src.app import app
 
@@ -9,6 +9,7 @@ def client() -> TestClient:
     return TestClient(app)
 
 
+@mark.skip(reason="This would be an expensive tset to run, and will fail without an API key")
 def test_get_caption_image() -> None:
     client = TestClient(app=app)
     sample_cat_image = (
