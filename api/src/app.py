@@ -1,17 +1,19 @@
 from http import HTTPStatus
-from typing import AsyncGenerator, Self
+from os import getenv
 
 from fastapi import Depends, FastAPI
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from starlette.requests import Request
 
+from src.dtos.follow_request import FollowUserRequest
 from src.dtos.image_post import ImagePost
+from src.dtos.like_post import LikePost
+from src.dtos.user import User
+from src.dtos.user_profile import UserProfile
 from src.models.user_model import UserModel
 from src.repositories.follow_repository import FollowRepository
 from src.repositories.image_post_repository import ImagePostRepository
@@ -19,11 +21,13 @@ from src.repositories.like_repository import LikeRepository
 from src.repositories.user_repository import UserRepository
 
 app = FastAPI()
-DATABASE_URL = "postgresql+asyncpg://image_sharing_user:image_sharing_password@db:5432/image_sharing_db"
+db_name = getenv("POSTGRES_DB")
+user = getenv("POSTGRES_USER")
+pw = getenv("POSTGRES_PASSWORD")
+DATABASE_URL = f"postgresql+asyncpg://{user}:{pw}@db:5432/{db_name}"
 
 
 def get_async_engine() -> AsyncEngine:
-
     async_engine: AsyncEngine = create_async_engine(
         DATABASE_URL,
         future=True,
@@ -43,33 +47,6 @@ async def get_async_session():
         yield async_sess
 
 
-class User(
-    BaseModel
-):  # TODO: think about whether to expose ID to frontend, mostly working with IDs, but don't want to expose implementation
-    username: str
-    email: str
-
-    @staticmethod
-    def from_db_model(user_db_model: UserModel) -> Self:
-        return User(username=user_db_model.username, email=user_db_model.email)
-
-
-class UserProfile(BaseModel):
-    user: User
-    following_count: int
-    follower_count: int
-
-
-class LikePost(BaseModel):
-    post_id: int
-    user_id: int
-
-
-class FollowUserRequest(BaseModel):
-    follower_user_id: int  # the user.id of the user who wants to follow
-    following_user_id: int  # the user.id of the user being followed
-
-
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     # needed to return 400 not 422, as per the spec
@@ -77,11 +54,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         status_code=HTTPStatus.BAD_REQUEST,
         content=jsonable_encoder({"detail": exc.errors()}),
     )
-
-
-@app.get("/")
-def hello_world():
-    return {"message": "Hello, World!"}
 
 
 @app.post("/create_post", status_code=HTTPStatus.CREATED)
@@ -147,7 +119,7 @@ async def follow_user(follow_user_request: FollowUserRequest, db: AsyncSession =
     return {"detail": "Followed successfully"}
 
 
-@app.get("/get_following_list/{user_id}", status_code=HTTPStatus.OK)  # TODO: rename remove get
+@app.get("/get_following_list/{user_id}", status_code=HTTPStatus.OK)
 async def get_following_list(user_id: int, db: AsyncSession = Depends(get_async_session)):
     # get a list of everyone this user is following
     following_list = await FollowRepository.get_list_users_user_is_following(user_id, db)

@@ -1,9 +1,5 @@
-TODO: erd
-
-Swagger Docs
-http://localhost:8000/doc
-
  # Python Developer Task
+Alastair Hirst
 
 This repository contains 3 services that together form the image sharing application
 
@@ -28,6 +24,13 @@ Once the services are up and running you can view and test the docs from their r
 API: http://localhost:8000/doc
 Inference Service: http://localhost:9000/doc
 
+The decision to use separate services gives us several benefits:
+
+- we can reuse the inference service for other applications
+- we can scale the inference service independently
+- the CRUD api does not need to GPU, so we can run it on a cheaper instance
+- tensorflow makes dependency management difficult; it makes the API much easier to update and mainain
+
 ## Testing
 ```bash
 
@@ -41,7 +44,7 @@ $ make bash # open a bash shell in the API container
 
 $ make bash-ai # open a bash shell in the Inference container
 
-$ make inference-tests # Run the tests for the inference service  # TODO: make this exist
+$ make inference-tests # Run the tests for the inference service
 
 ```
 
@@ -99,7 +102,14 @@ Indexes:
 PSQL (not SQLite) creates indexes on the primary key by default, including composite PKs.
 to efficiently allow query of link ID I have added an index. Indexes slow down writes, but this is not normally a concern.
 
+### microservices architecture
 
+The decision to use two separate services gives us several benefits:
+
+- we can reuse the inference service for other applications
+- we can scale the inference service independently
+- the CRUD api does not need to GPU, so we can run it on a cheaper instance
+- tensorflow makes dependency management difficult; it makes the API much easier to update and mainain
 
 #### TODO: add excalidraw ERD
 
