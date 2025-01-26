@@ -44,6 +44,7 @@ class ImageClassificationController:
         with open(labels_path, "r") as f:
             self.labels = f.read().splitlines()
 
+
     @staticmethod
     def _download_image_from_url(image_url: str) -> Image.Image:
 

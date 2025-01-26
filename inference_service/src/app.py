@@ -8,17 +8,13 @@ from src.controllers.classifier_controller import ImageClassificationController
 from src.dtos import ImageUrl, ClassificationResponse, CaptionResponse
 
 app = FastAPI()
-# TODO: move to environment variables
-os.environ["TFHUB_CACHE_DIR"] = "/app/model_cache"
-MODEL_URL = "https://tfhub.dev/google/tf2-preview/mobilenet_v2/classification/4"
-LABELS_URL = "https://storage.googleapis.com/download.tensorflow.org/data/ImageNetLabels.txt"
 
-image_classification_service = ImageClassificationController(model_url=MODEL_URL, labels_url=LABELS_URL)
-"""
-# TODO: use dependency injection
-"""
+MODEL_URL = os.getenv("MODEL_URL")
+LABELS_URL = os.getenv("LABELS_URL")
 api_key = os.getenv("OPENAI_API_KEY")
 
+
+image_classification_service = ImageClassificationController(model_url=MODEL_URL, labels_url=LABELS_URL)
 image_caption_service = ImageCaptionController(api_key)
 
 
