@@ -54,7 +54,7 @@ async def user_signup(user_data: User, db: AsyncSession = Depends(get_async_sess
     return new_user
 
 
-@app.get("/get_posts/{user_id}", status_code=HTTPStatus.OK)  # todo: rename to get_posts_by_user_id
+@app.get("/get_posts/{user_id}", status_code=HTTPStatus.OK)
 async def get_posts(user_id: int, db: AsyncSession = Depends(get_async_session)):
     posts = await ImagePostRepository.get_posts_by_user_id(user_id, db)
     if not posts:
@@ -68,7 +68,7 @@ async def like_post(like_data: LikePost, db: AsyncSession = Depends(get_async_se
     if not post_exists:
         return {"detail": "Post not found", "status_code": HTTPStatus.NOT_FOUND}
     if await LikeRepository.is_post_liked(like_data.post_id, like_data.user_id, db):
-        return {"detail": "Post already liked"}  # TODO: get rid of, its a put
+        return {"detail": "Post already liked"}
     await LikeRepository.like_post(like_data.post_id, like_data.user_id, db)
     return {"detail": "Post liked"}
 
@@ -166,7 +166,7 @@ async def get_sharable_link(post_id: int, db: AsyncSession = Depends(get_async_s
 
 @app.get("/posts/{post_uuid}", status_code=HTTPStatus.OK)
 async def get_post_by_public_link(post_uuid: str, db: AsyncSession = Depends(get_async_session)) -> ImagePost:
-    if len(post_uuid) != 36:  # TODO: maybe use pydantic for this as per other requests
+    if len(post_uuid) != 36:  # TODO: maybe use pydantic for validation this as per other requests
         raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="Invalid UUID format")
     image_post = await ImagePostRepository.try_get_published_post_by_uuid(post_uuid, db)
     if image_post:
