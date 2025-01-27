@@ -1,5 +1,12 @@
  # Python Developer Task
-Alastair Hirst
+### Alastair Hirst
+
+#### See this repo in action!
+
+https://asciinema.org/a/nCW5KakSHaUByau33YdSIJfvl
+
+ ## Overview
+
 
 This repository contains 3 services that together form the image sharing application
 
@@ -24,12 +31,7 @@ Once the services are up and running you can view and test the docs from their r
 API: http://localhost:8000/doc
 Inference Service: http://localhost:9000/doc
 
-The decision to use separate services gives us several benefits:
 
-- we can reuse the inference service for other applications
-- we can scale the inference service independently
-- the CRUD api does not need to GPU, so we can run it on a cheaper instance
-- tensorflow makes dependency management difficult; it makes the API much easier to update and mainain
 
 ## Testing
 ```bash
@@ -87,6 +89,11 @@ It would seem to take around 1 second per request, again adequate for real time.
 
 Testing this requires an openai API key, which naturally I have not included in this public repo.
 
+There are also transformer based models, such as transformers from Hugging Face.
+It would have been interesting to explore these, I did not find something that would work out of the box.
+https://huggingface.co/docs/transformers/tasks/image_captioning
+
+
 ### Database schema
 
 Getting the database schema correct is really import and this task presents some interesting challenges.
@@ -109,7 +116,7 @@ The decision to use two separate services gives us several benefits:
 - we can reuse the inference service for other applications
 - we can scale the inference service independently
 - the CRUD api does not need to GPU, so we can run it on a cheaper instance
-- tensorflow makes dependency management difficult; it makes the API much easier to update and mainain
+- tensorflow makes dependency management difficult; it makes the API much easier to update and maintain
 
 #### TODO: add excalidraw ERD
 
