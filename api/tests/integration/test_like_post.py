@@ -11,7 +11,7 @@ def test_like_post_success(client, db_session) -> None:
     user = UserModel(username="test_user", email="test_user@example.com")
     db_session.add(user)
     db_session.commit()
-    db_session.refresh(user)  # Ensure `id` is populated
+    db_session.refresh(user)
 
     post1 = ImagePostModel(
         image_url="http://example.com/image1.jpg",
@@ -30,7 +30,9 @@ def test_like_post_success(client, db_session) -> None:
     db_session.commit()
 
     response = client.put(
-        "/like_post", headers={"content-type": "application/json"}, json={"post_id": post2.id, "user_id": user.id}
+        "/like_post",
+        headers={"content-type": "application/json"},
+        json={"post_id": post2.id, "user_email": user.email},
     )
     assert response.status_code == HTTPStatus.OK
 
@@ -116,7 +118,7 @@ def test_unlike_post_post_not_found(client, db_session):
     response = client.put(
         "/unlike_post",
         headers={"content-type": "application/json"},
-        json={"user_id": user.id, "post_id": 999},
+        json={"user_email": user.email, "post_id": 999},
     )
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {"detail": "post not found"}
@@ -142,7 +144,7 @@ def test_unlike_post_success(client, db_session):
     response = client.put(
         "/unlike_post",
         headers={"content-type": "application/json"},
-        json={"user_id": user.id, "post_id": post_1.id},
+        json={"user_email": user.email, "post_id": post_1.id},
     )
     assert response.status_code == HTTPStatus.OK
     result = db_session.execute(

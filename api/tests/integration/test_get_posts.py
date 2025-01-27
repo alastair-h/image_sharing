@@ -49,7 +49,7 @@ def test_get_posts_from_user(client, db_session: AsyncSession) -> None:
     db_session.commit()
 
     # Act: Make a request to fetch posts for user1
-    response = client.get(f"/get_posts_from_user/{user1.id}")
+    response = client.get(f"/get_posts_from_user/{user1.email}")
 
     # Assert: Ensure the response contains only posts from user1
     assert response.status_code == HTTPStatus.OK
@@ -121,7 +121,7 @@ def __setup_get_posts_from_following(passed_session: AsyncSession) -> UserModel:
 def test_get_posts_from_following_success(client, db_session: AsyncSession):
     user = __setup_get_posts_from_following(db_session)
 
-    response = client.get(f"/get_posts_from_following/{user.id}")
+    response = client.get(f"/get_posts_from_following/{user.email}")
 
     assert response.status_code == HTTPStatus.OK
     response_data = response.json()

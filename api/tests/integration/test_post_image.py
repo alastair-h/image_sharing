@@ -138,7 +138,7 @@ def test_get_posts(client, db_session):
     db_session.add_all([post1, post2])
     db_session.commit()
 
-    response = client.get(f"/get_posts/{user.id}")
+    response = client.get(f"/get_posts/{user.email}")
 
     assert response.status_code == HTTPStatus.OK
     response_data = response.json()
