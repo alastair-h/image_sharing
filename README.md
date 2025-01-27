@@ -107,7 +107,7 @@ Sometimes it is useful to use raw SQL even with an ORM, especially when we have 
 Indexes:
 
 PSQL (not SQLite) creates indexes on the primary key by default, including composite PKs.
-to efficiently allow query of link ID I have added an index. Indexes slow down writes, but this is not normally a concern.
+to efficiently allow query of link ID, email I have added indexes. Indexes slow down writes, but this is not normally a concern.
 
 ### microservices architecture
 
