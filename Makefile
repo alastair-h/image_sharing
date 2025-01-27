@@ -2,6 +2,8 @@ build:
 	./scripts/build.sh
 bash:
 	./scripts/bash.sh
+start:
+	./scripts/start.sh
 migrate-head:
 	./scripts/migrate-head.sh
 attach-db:
@@ -12,3 +14,7 @@ format:
 	./scripts/format.sh
 static-tests:
 	./scripts/static-tests.sh
+bash-ai:
+	./scripts/bash-ai.sh
+inference-tests:
+	./scripts/inference-tests.sh
