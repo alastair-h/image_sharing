@@ -67,7 +67,15 @@ but I was unable to get this working in time.
 I've included a simple CI pipeline that runs against the API, running unit tests, coverage and linting (# TODO: Infernce service.)
 
 
-### AI models
+### AI Task
+
+I have implemented a separate microservice, for the AI task.
+The best way to test this functionality is through the Open Api, attaching an Image URL.
+
+I have two models, the classifier is based on tensorflow and should only require a `make start` to run.
+The captioning model is based on OpenAI, and requires an API key to run. I have not included this in the repo.
+
+http://localhost:9000/doc
 
 #### Classifier
 I am using Mobile Net v2, I think it is a good all round option for real time image classification.
@@ -104,13 +112,13 @@ In general, I have tried to use idiomatic sqlachemy, including backpopulates, an
 I have executed raw SQL to get the most liked posts. Since we need scan the entire table, we want an efficient query.
 Sometimes it is useful to use raw SQL even with an ORM, especially when we have slow queries.
 
-Indexes:
+#### Indexes:
 
 PSQL (not SQLite) creates indexes on the primary key by default, including composite PKs.
-to efficiently allow query of link ID, email I have added indexes. Indexes slow down writes, but this is not normally a concern.
+To efficiently allow query of link ID, email I have added indexes. Indexes slow down writes, but this is not normally a concern.
 
 ## Entities:
-![img.png](img.png)
+![img.png](img_1.png)
 ### microservices architecture
 
 The decision to use two separate services gives us several benefits:
@@ -129,7 +137,7 @@ Features like Enums and Partial indexes are also very useful.
 
 Testing with SQLite is much easier, as you can just use an in memory database, and trivially wipe it between tests.
 This often starts well, however with more complex projects, where the aforementioned Enums, special tools start to be used,
-we can see the limitiations of this approach. N.B. that postgres also uses lower isolation levels by default than SQLite. 
+we can see the limitations of this approach. N.B. that postgres also uses lower isolation levels by default than SQLite. 
 
 For critical applications it is often desirable to have postgres testing, and I have used this here.
 Between each tests we truncate all tables and restart the Pks. This is slower and also means we have to manually populate the 
@@ -139,7 +147,6 @@ In the test we don't have enough information to really affirm any one choice, I 
 
 Although FastAPI runs asynchronously, and I have used asyncpg, I have intentionally not used async code in the tests. This is because
 this makes tests much more complex, without adding value.
-
 
 
 Other technical points
