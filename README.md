@@ -98,7 +98,7 @@ https://huggingface.co/docs/transformers/tasks/image_captioning
 
 Getting the database schema correct is really import and this task presents some interesting challenges.
 The users following/liking each other, requires a many-to-many relationship, achieved
-with a junction table.
+with a junction table. I chose to denormalize email, placing it on the user and the post, for convenient access.
 
 In general, I have tried to use idiomatic sqlachemy, including backpopulates, and relationships.
 I have executed raw SQL to get the most liked posts. Since we need scan the entire table, we want an efficient query.
@@ -109,6 +109,8 @@ Indexes:
 PSQL (not SQLite) creates indexes on the primary key by default, including composite PKs.
 to efficiently allow query of link ID, email I have added indexes. Indexes slow down writes, but this is not normally a concern.
 
+## Entities:
+![img.png](img.png)
 ### microservices architecture
 
 The decision to use two separate services gives us several benefits:
@@ -117,8 +119,6 @@ The decision to use two separate services gives us several benefits:
 - we can scale the inference service independently
 - the CRUD api does not need to GPU, so we can run it on a cheaper instance
 - tensorflow makes dependency management difficult; it makes the API much easier to update and maintain
-
-#### TODO: add excalidraw ERD
 
 ### Database testing
 
